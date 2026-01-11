@@ -101,20 +101,39 @@ def load_autoepoch_config(model_type: str, is_style: bool, dataset_size: int) ->
         print(f"Warning: Could not load Autoepoch config: {e}", flush=True)
         return None
 
-def get_config_for_model(lrs_config: dict, model_name: str) -> dict:
+def get_dataset_category(size: int) -> str:
+    if 6 <= size <= 15: return "small"
+    if 16 <= size <= 35: return "medium"
+    if 36 <= size <= 60: return "large"
+    return "medium" # Fallback
+
+def get_config_for_model(lrs_config: dict, model_name: str, dataset_size: int = 0) -> dict:
     if not isinstance(lrs_config, dict):
         return None
 
-    data = lrs_config.get("data")
-    default_config = lrs_config.get("default", {})
+    category = get_dataset_category(dataset_size)
+    data = lrs_config.get("data", {})
+    default_root = lrs_config.get("default", {})
 
-    if isinstance(data, dict) and model_name in data:
-        return merge_model_config(default_config, data.get(model_name))
+    # Start with global defaults
+    final_settings = {k: v for k, v in default_root.items() if not isinstance(v, dict)}
+    
+    # Add category-specific defaults
+    default_cat = default_root.get(category, {})
+    if isinstance(default_cat, dict):
+        final_settings.update(default_cat)
 
-    if default_config:
-        return default_config
+    # Apply hash-specific overrides
+    if model_name in data:
+        model_entry = data.get(model_name, {})
+        # Non-category overrides for this hash
+        final_settings.update({k: v for k, v in model_entry.items() if not isinstance(v, dict)})
+        # Category-specific overrides for this hash
+        hash_cat = model_entry.get(category, {})
+        if isinstance(hash_cat, dict):
+            final_settings.update(hash_cat)
 
-    return None
+    return final_settings
 
 def load_lrs_config(model_type: str, is_style: bool) -> dict:
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -167,17 +186,22 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 if trigger_word:
                     process['trigger_word'] = trigger_word
 
-                # 2. Tiered Logic for AI-Toolkit
+                # 2. Tiered Logic for AI-Toolkit - Size Aware
                 lrs_config = load_lrs_config(model_type, is_style)
                 dataset_size = count_images_in_directory(train_data_dir)
                 ae_config = load_autoepoch_config(model_type, is_style, dataset_size) if dataset_size > 0 else None
                 
-                # Apply LRS (Tier 2) and Autoepoch (Tier 3)
-                for overrides in [load_lrs_config(model_type, is_style), ae_config]:
-                    if overrides:
-                        settings = get_config_for_model(overrides, hash_model(model_name)) if overrides == lrs_config else overrides
-                        if settings:
-                            # Map keys to YAML structure
+                # Sequence: LRS (Tier 2) -> Autoepoch (Tier 3)
+                for overrides in [lrs_config, ae_config]:
+                    if not overrides:
+                        continue
+                    
+                    # For Qwen and Z-Image, use plain model_name instead of Hash
+                    target_id = model_name if overrides == lrs_config else model_name
+                    
+                    settings = get_config_for_model(overrides, target_id, dataset_size) if overrides == lrs_config else overrides
+                    if settings:
+                        print(f"Applying overrides to AI-Toolkit config for {target_id} (size {dataset_size})...", flush=True)
                             train_node = process.get('train', {})
                             network_node = process.get('network', {})
                             for k, v in settings.items():
@@ -287,23 +311,33 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             config["network_alpha"] = network_config["network_alpha"]
             config["network_args"] = network_config["network_args"]
 
-        # 2. LRS Logic: Hash-based overrides (Tier 2)
-        lrs_config = load_lrs_config(model_type, is_style)
-        if lrs_config:
-            model_hash = hash_model(model_name)
-            lrs_settings = get_config_for_model(lrs_config, model_hash)
-            if lrs_settings:
-                print(f"Applying LRS hash overrides for {model_name} ({model_hash})", flush=True)
-                for key, value in lrs_settings.items():
-                    config[key] = value
+        config["pretrained_model_name_or_path"] = model_path
+        config["train_data_dir"] = train_data_dir
+        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
+        os.makedirs(output_dir, exist_ok=True)
+        config["output_dir"] = output_dir
 
-        # 3. Autoepoch Logic: Size-based math (Tier 3)
+        # Calculate dataset size upfront for Tier 2 and Tier 3
         dataset_size = 0
         if os.path.exists(train_data_dir):
             dataset_size = count_images_in_directory(train_data_dir)
             if dataset_size > 0:
                 print(f"Counted {dataset_size} images in training directory", flush=True)
 
+        # 2. LRS Layer: Specific Model overrides (Tier 2) - Size Aware
+        lrs_config = load_lrs_config(model_type, is_style)
+        if lrs_config:
+            # Hash for SDXL/Flux, Raw name for AI-Toolkit
+            is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
+            target_id = model_name if is_ai_toolkit else hash_model(model_name)
+            
+            lrs_settings = get_config_for_model(lrs_config, target_id, dataset_size)
+            if lrs_settings:
+                print(f"Applying LRS logic overrides for {target_id}", flush=True)
+                for key, value in lrs_settings.items():
+                    config[key] = value
+
+        # 3. Autoepoch Layer: Dataset-size math (Tier 3)
         if dataset_size > 0:
             ae_config = load_autoepoch_config(model_type, is_style, dataset_size)
             if ae_config:

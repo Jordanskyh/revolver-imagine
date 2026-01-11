@@ -1,4 +1,28 @@
 {
-    "default": {},
-    "data": {}
+    "default": {
+        "unet_lr": null,
+        "text_encoder_lr": null,
+        "prior_loss_weight": null,
+        "noise_offset": null,
+        "network_dropout": null,
+        "lr_scheduler": null,
+        "lr_warmup_steps": null,
+        "min_snr_gamma": null,
+        "max_grad_norm": null,
+        "optimizer_args": [
+            "weight_decay=",
+            "betas=",
+            "eps=",
+            "decouple=",
+            "use_bias_correction=",
+            "safeguard_warmup="
+        ]
+    },
+    "data": {
+        "gradients-io-tournaments/Z-Image-Turbo": {
+            "small": {},
+            "medium": {},
+            "large": {}
+        }
+    }
 }
