@@ -1,33 +1,41 @@
 {
     "default": {
-        "unet_lr": null,
-        "text_encoder_lr": null,
-        "prior_loss_weight": null,
-        "noise_offset": null,
-        "network_dropout": null,
-        "lr_scheduler": null,
-        "lr_warmup_steps": null,
-        "min_snr_gamma": null,
-        "max_grad_norm": null,
+        "unet_lr": 0.00008,
+        "text_encoder_lr": 0.0,
+        "prior_loss_weight": 1.0,
+        "noise_offset": 0.0,
+        "max_grad_norm": 0.5,
+        "lr_scheduler": "constant",
+        "lr_warmup_steps": 0,
+        "min_snr_gamma": 0.0,
         "optimizer_args": [
-            "weight_decay=",
-            "betas=",
-            "eps=",
-            "decouple=",
-            "use_bias_correction=",
-            "safeguard_warmup="
+            "weight_decay=0.01",
+            "betas=(0.9, 0.999)",
+            "eps=1e-08"
         ]
     },
     "data": {
         "gradients-io-tournaments/Qwen-Image": {
-            "small": {},
-            "medium": {},
-            "large": {}
+            "small": {
+                "unet_lr": 0.0001
+            },
+            "medium": {
+                "unet_lr": 0.00008
+            },
+            "large": {
+                "unet_lr": 0.00006
+            }
         },
         "gradients-io-tournaments/Qwen-Image-Jib-Mix": {
-            "small": {},
-            "medium": {},
-            "large": {}
+            "small": {
+                "unet_lr": 0.0001
+            },
+            "medium": {
+                "unet_lr": 0.00008
+            },
+            "large": {
+                "unet_lr": 0.00006
+            }
         }
     }
 }

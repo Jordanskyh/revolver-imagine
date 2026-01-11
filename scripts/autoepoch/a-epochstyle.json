@@ -6,20 +6,20 @@
     },
     "size_ranges": [
         {
-            "min": 1,
+            "min": 6,
             "max": 15,
             "config": {
-                "train_batch_size": 4,
-                "max_train_epochs": 120,
-                "save_every_n_epochs": 30
+                "train_batch_size": 2,
+                "max_train_epochs": 100,
+                "save_every_n_epochs": 25
             }
         },
         {
             "min": 16,
             "max": 35,
             "config": {
-                "train_batch_size": 8,
-                "max_train_epochs": 80,
+                "train_batch_size": 4,
+                "max_train_epochs": 70,
                 "save_every_n_epochs": 20
             }
         },
@@ -27,7 +27,7 @@
             "min": 36,
             "max": 60,
             "config": {
-                "train_batch_size": 16,
+                "train_batch_size": 8,
                 "max_train_epochs": 50,
                 "save_every_n_epochs": 10
             }

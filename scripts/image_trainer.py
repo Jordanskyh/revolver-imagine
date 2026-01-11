@@ -202,15 +202,70 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     settings = get_config_for_model(overrides, target_id, dataset_size) if overrides == lrs_config else overrides
                     if settings:
                         print(f"Applying overrides to AI-Toolkit config for {target_id} (size {dataset_size})...", flush=True)
-                            train_node = process.get('train', {})
-                            network_node = process.get('network', {})
-                            for k, v in settings.items():
-                                if k == "train_batch_size": train_node['batch_size'] = v
-                                elif k == "max_train_steps": train_node['steps'] = v
-                                elif k == "unet_lr": train_node['lr'] = v
-                                elif k == "network_dim": network_node['linear'] = v
-                                elif k == "network_alpha": network_node['linear_alpha'] = v
-                                # Add other mappings as needed
+                        train_node = process.get('train', {})
+                        network_node = process.get('network', {})
+                        
+                        for k, v in settings.items():
+                            if v is None: continue
+                            
+                            # 1. Math/Efficiency Parameters
+                            if k == "train_batch_size":
+                                train_node['batch_size'] = v
+                                # Auto-recalculate steps if we already have epochs
+                                if 'max_train_epochs' in settings:
+                                    epochs = settings['max_train_epochs']
+                                    if dataset_size > 0:
+                                        train_node['steps'] = int((dataset_size / v) * epochs)
+                            elif k == "max_train_epochs":
+                                batch_size = train_node.get('batch_size', 1)
+                                if dataset_size > 0:
+                                    train_node['steps'] = int((dataset_size / batch_size) * v)
+                            
+                            # 2. Quality/LR Parameters
+                            elif k == "unet_lr":
+                                train_node['lr'] = v
+                            elif k == "text_encoder_lr":
+                                # AI-Toolkit sometimes uses a list or single TE lr
+                                if isinstance(v, list) and len(v) > 0:
+                                    train_node['lr_te'] = v[0]
+                                else:
+                                    train_node['lr_te'] = v
+                            elif k == "lr_scheduler":
+                                train_node['lr_scheduler'] = v
+                            elif k == "lr_warmup_steps":
+                                # AI-Toolkit uses lr_warmup_steps in steps
+                                train_node['lr_warmup_steps'] = v
+                            
+                            # 3. Model Structure
+                            elif k == "network_dim":
+                                network_node['linear'] = v
+                            elif k == "network_alpha":
+                                network_node['linear_alpha'] = v
+                            
+                            # 4. Advanced Training Parameters
+                            elif k == "noise_offset":
+                                train_node['noise_offset'] = v
+                            elif k == "min_snr_gamma":
+                                train_node['min_snr_gamma'] = v
+                            elif k == "max_grad_norm":
+                                train_node['max_grad_norm'] = v
+                            elif k == "optimizer_args":
+                                if 'optimizer_params' not in train_node:
+                                    train_node['optimizer_params'] = {}
+                                for arg in v:
+                                    if "=" in arg:
+                                        key_val = arg.split('=', 1)
+                                        if len(key_val) == 2:
+                                            opt_k = key_val[0].strip()
+                                            opt_v = key_val[1].strip()
+                                            if opt_v: # Only if value is provided
+                                                try:
+                                                    if opt_v.lower() == 'true': opt_v = True
+                                                    elif opt_v.lower() == 'false': opt_v = False
+                                                    elif '.' in opt_v: opt_v = float(opt_v)
+                                                    else: opt_v = int(opt_v)
+                                                except: pass
+                                                train_node['optimizer_params'][opt_k] = opt_v
         
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.yaml")
         save_config(config, config_path)
@@ -304,12 +359,32 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
             if is_style:
                 network_config = config_mapping.get(network_config_style.get(model_name, 235), config_mapping[235])
+                # SDXL STYLE SPECIALIZATION
+                config["loss_type"] = "l2"
+                config["caption_dropout_probability"] = 0.75
             else:
                 network_config = config_mapping.get(network_config_person.get(model_name, 235), config_mapping[235])
+                # SDXL PERSON SPECIALIZATION
+                config["loss_type"] = "l2"
+                config["caption_dropout_probability"] = 0.75
 
             config["network_dim"] = network_config["network_dim"]
             config["network_alpha"] = network_config["network_alpha"]
             config["network_args"] = network_config["network_args"]
+        elif model_type == "flux":
+            config["loss_type"] = "l2"
+            config["caption_dropout_probability"] = 0.75
+            config["mixed_precision"] = "bf16"
+            config["train_unet"] = True
+            config["train_text_encoder"] = False
+        elif model_type == "z-image":
+            config["loss_type"] = "l2"
+            config["caption_dropout_probability"] = 0.1
+            config["mixed_precision"] = "bf16"
+        elif model_type == "qwen-image":
+            config["loss_type"] = "l2"
+            config["caption_dropout_probability"] = 0.05
+            config["mixed_precision"] = "bf16"
 
         config["pretrained_model_name_or_path"] = model_path
         config["train_data_dir"] = train_data_dir

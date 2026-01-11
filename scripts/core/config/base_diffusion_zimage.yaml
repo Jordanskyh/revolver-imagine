@@ -23,8 +23,11 @@ config:
       resolution: [512, 768, 1024]
       is_reg: false
     train:
+      # REFERENSI MUTLAK JURI
       batch_size: 1
-      steps: 2000
+      steps: 6
+      cfg_scale: 1
+      denoise: 0.9
       lr: 0.0001
       optimizer: adamw8bit
       gradient_checkpointing: true
