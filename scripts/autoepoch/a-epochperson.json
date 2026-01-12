@@ -1,8 +1,8 @@
 {
     "default": {
         "train_batch_size": 4,
-        "max_train_epochs": 40,
-        "save_every_n_epochs": 10
+        "max_train_epochs": 100,
+        "save_every_n_epochs": 20
     },
     "size_ranges": [
         {
@@ -10,7 +10,7 @@
             "max": 15,
             "config": {
                 "train_batch_size": 1,
-                "max_train_epochs": 150,
+                "max_train_epochs": 200,
                 "save_every_n_epochs": 50
             }
         },
@@ -19,8 +19,8 @@
             "max": 35,
             "config": {
                 "train_batch_size": 2,
-                "max_train_epochs": 100,
-                "save_every_n_epochs": 25
+                "max_train_epochs": 150,
+                "save_every_n_epochs": 50
             }
         },
         {
@@ -28,8 +28,8 @@
             "max": 60,
             "config": {
                 "train_batch_size": 4,
-                "max_train_epochs": 130,
-                "save_every_n_epochs": 30
+                "max_train_epochs": 100,
+                "save_every_n_epochs": 20
             }
         }
     ]

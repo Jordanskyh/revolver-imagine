@@ -9,10 +9,10 @@ network_dim = 16
 network_alpha = 16
 
 [optimizer_arguments]
-optimizer_type = "adamw8bit"
-learning_rate = 1e-4
+optimizer_type = "prodigy"
+learning_rate = 1.0
 max_grad_norm = 1.0
-optimizer_args = [ "weight_decay=0.01", "betas=0.9,0.999", "eps=1e-08" ]
+optimizer_args = [ "d_coef=1.0", "weight_decay=0.01", "safeguard_warmup=True", "use_bias_correction=True" ]
 lr_scheduler = "constant"
 
 [dataset_arguments]
@@ -28,9 +28,9 @@ save_model_as = "safetensors"
 max_data_loader_n_workers = 2
 
 [inference]
-# REFERENSI MUTLAK JURI
+# REFERENSI MUTLAK JURI (FLUX V2 - CFG 100)
 steps = 35
-guidance_scale = 6.0
+guidance_scale = 10.0
 denoise = 0.75
 resolution = [1024, 1024]
 seed = 42

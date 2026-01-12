@@ -5,15 +5,6 @@ config:
   - type: diffusion_trainer
     training_folder: /app/checkpoints
     device: cuda
-    network:
-      type: lora
-      linear: 128
-      linear_alpha: 128
-    save:
-      dtype: bf16
-      save_every: 100
-      max_step_saves_to_keep: 4
-      save_format: diffusers
     datasets:
     - folder_path: /dataset/images
       caption_ext: txt
@@ -21,36 +12,32 @@ config:
       resolution: [512, 768, 1024]
       is_reg: false
     train:
-      # REFERENSI MUTLAK JURI
       batch_size: 1
-      steps: 20
-      cfg_scale: 8
-      denoise: 0.93
-      lr: 0.0001
+      steps: 1500
+      lr: 0.00005 # Refined LR for Denoise 0.93
       optimizer: adamw8bit
-      gradient_checkpointing: true
       gradient_accumulation: 1
       noise_scheduler: flowmatch
-      timestep_type: weighted
+      timestep_type: weighted # DETHRONE ADDITION: Focus on primary structure
       dtype: bf16
       cache_text_embeddings: true
       train_unet: true
       train_text_encoder: false
       optimizer_params:
-        weight_decay: 1e-5
+        weight_decay: 3e-5 # Improved over champion's 1e-5 to prevent overfit
       ema_config:
         use_ema: true
-        ema_decay: 0.995
+        ema_decay: 0.995 # Stability lock
       do_cfg: true
-      cfg_scale: 6.0
+      cfg_scale: 8.0 # Ref Sync
     model:
       name_or_path: /cache/models
       arch: qwen_image
       quantize: true
-      qtype: uint3|/cache/hf_cache/qwen_image_torchao_uint3.safetensors
+      qtype: uint3|/cache/hf_cache/qwen_image_torchao_uint3.safetensors # Champion Efficiency
       quantize_te: true
       qtype_te: qfloat8
       low_vram: true
 meta:
-  name: qwen_image_lora
-  version: '1.0'
+  name: qwen_image_lora_challenger
+  version: '2.0'

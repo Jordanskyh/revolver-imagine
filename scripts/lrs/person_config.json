@@ -11,22 +11,55 @@
         "optimizer_args": [
             "weight_decay=0.01",
             "betas=(0.9,0.999)",
-            "eps=1e-08"
+            "eps=1e-08",
+            "noise_offset_type=Multires",
+            "multires_noise_iterations=4",
+            "multires_noise_discount=0.3"
         ]
     },
     "data": {
         "7d6474f05dc6940ad31182d1359e7f6390dfa92a0cbae20597bfd86d415bd0fd": {
             "small": {
-                "unet_lr": 0.0001,
-                "prior_loss_weight": 1.0
+                "unet_lr": 0.00012
             },
             "medium": {
-                "unet_lr": 0.00008,
-                "prior_loss_weight": 0.85
+                "unet_lr": 0.0001
             },
             "large": {
-                "unet_lr": 0.000065,
-                "prior_loss_weight": 0.75
+                "unet_lr": 0.00008
+            }
+        },
+        "6042ce99f9cde5c1a8acfc32dd1b3ba7ac4523aba281c1d9295e1a6d7b98a8e7": {
+            "small": {
+                "unet_lr": 0.00009
+            },
+            "medium": {
+                "unet_lr": 0.00008
+            },
+            "large": {
+                "unet_lr": 0.000065
+            }
+        },
+        "a39c9825466ea06cd71c5db75963783dba07b2d2a02b9aac21452c3762493c8f": {
+            "small": {
+                "unet_lr": 0.000075
+            },
+            "medium": {
+                "unet_lr": 0.00006
+            },
+            "large": {
+                "unet_lr": 0.00005
+            }
+        },
+        "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8": {
+            "small": {
+                "unet_lr": 0.00012
+            },
+            "medium": {
+                "unet_lr": 0.0001
+            },
+            "large": {
+                "unet_lr": 0.00008
             }
         },
         "84b1be29d81de0bf88d6c4033943d2bc4b543d9ebba9e1c9678296237f147466": {
@@ -128,29 +161,8 @@
                 "unet_lr": 0.00008
             }
         },
-        "6042ce99f9cde5c1a8acfc32dd1b3ba7ac4523aba281c1d9295e1a6d7b98a8e7": {
-            "small": {
-                "unet_lr": 0.00012
-            },
-            "medium": {
-                "unet_lr": 0.0001
-            },
-            "large": {
-                "unet_lr": 0.00008
-            }
-        },
-        "a39c9825466ea06cd71c5db75963783dba07b2d2a02b9aac21452c3762493c8f": {
-            "small": {
-                "unet_lr": 0.00008
-            },
-            "medium": {
-                "unet_lr": 0.00006
-            },
-            "large": {
-                "unet_lr": 0.00005
-            }
-        },
         "eb324bfcad14e8f1d46346f46ae7af7d3e58c3babbc1f699ee7c61baab291369": {
+            "comment": "Terminus - Rank 32",
             "small": {
                 "unet_lr": 0.00012
             },
@@ -236,17 +248,6 @@
             },
             "large": {
                 "unet_lr": 0.00008
-            }
-        },
-        "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8": {
-            "small": {
-                "unet_lr": 0.0001
-            },
-            "medium": {
-                "unet_lr": 0.00008
-            },
-            "large": {
-                "unet_lr": 0.000065
             }
         },
         "ad7785f9ff51db0c7e07277f5f3cc474217158f242cc44a58581f56f28017c7d": {
@@ -360,14 +361,15 @@
             }
         },
         "7b4b21f095f261dc26d3c4964a1ddf71dd2e907c5cd733bdb934e7228727b7a6": {
+            "comment": "UltraReal - Rank 64",
             "small": {
-                "unet_lr": 0.00012
+                "unet_lr": 0.00009
             },
             "medium": {
-                "unet_lr": 0.0001
+                "unet_lr": 0.00008
             },
             "large": {
-                "unet_lr": 0.00008
+                "unet_lr": 0.000065
             }
         }
     }
