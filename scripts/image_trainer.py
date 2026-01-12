@@ -114,7 +114,30 @@ def load_size_based_config(model_type: str, is_style: bool, dataset_size: int) -
         print(f"Warning: Could not load autoepoch config from {config_file}: {e}", flush=True)
         return None
 
-def get_config_for_model(lrs_config: dict, model_name: str) -> dict:
+def get_dataset_size_category(dataset_size: int) -> str:
+    """
+    Map dataset size to category matching Autoepoch ranges.
+    Returns: 'small', 'medium', or 'large'
+    """
+    if dataset_size <= 15:
+        return "small"
+    elif dataset_size <= 35:
+        return "medium"
+    else:
+        return "large"
+
+def get_config_for_model(lrs_config: dict, model_name: str, dataset_size: int = None) -> dict:
+    """
+    Get LRS config for a specific model, with optional dataset size tuning.
+    
+    Args:
+        lrs_config: The loaded LRS JSON config
+        model_name: Model hash or identifier
+        dataset_size: Number of images in dataset (optional)
+    
+    Returns:
+        Merged config dict with size-specific overrides applied
+    """
     if not isinstance(lrs_config, dict):
         return None
 
@@ -122,7 +145,21 @@ def get_config_for_model(lrs_config: dict, model_name: str) -> dict:
     default_config = lrs_config.get("default", {})
 
     if isinstance(data, dict) and model_name in data:
-        return merge_model_config(default_config, data.get(model_name))
+        model_config = data.get(model_name)
+        
+        # If dataset_size provided and model_config has size categories, merge them
+        if dataset_size is not None and isinstance(model_config, dict):
+            size_category = get_dataset_size_category(dataset_size)
+            
+            # Check if model_config has size-specific settings
+            if size_category in model_config:
+                size_specific_config = model_config.get(size_category, {})
+                # Merge: default → model_config (non-size keys) → size_specific
+                base_model_config = {k: v for k, v in model_config.items() if k not in ["small", "medium", "large"]}
+                merged = merge_model_config(default_config, base_model_config)
+                return merge_model_config(merged, size_specific_config)
+        
+        return merge_model_config(default_config, model_config)
 
     if default_config:
         return default_config
@@ -192,7 +229,11 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         if lrs_config:
             model_hash = hash_model(model_name)
-            lrs_settings = get_config_for_model(lrs_config, model_hash)
+            
+            # Count images in training directory for size-specific LR tuning
+            dataset_size = count_images_in_directory(train_data_dir)
+            
+            lrs_settings = get_config_for_model(lrs_config, model_hash, dataset_size)
 
             if lrs_settings:
                 for optional_key in [
