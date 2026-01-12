@@ -454,6 +454,28 @@ def run_training(model_type, config_path):
             raise subprocess.CalledProcessError(return_code, training_command)
 
         print("Training subprocess completed successfully.", flush=True)
+        
+        # --- FIX: MOVE FILE IF SAVED IN WRONG LOCATION ---
+        try:
+            # Parse config to get intended output directory
+            intended_output_dir = None
+            if config_path.endswith(".toml"):
+                import toml
+                with open(config_path, "r") as f:
+                    c = toml.load(f)
+                    intended_output_dir = c.get("output_dir")
+            
+            if intended_output_dir:
+                default_loc = "/app/checkpoints/last.safetensors"
+                if os.path.exists(default_loc):
+                    print(f"[FIX] Moving checkpoint from {default_loc} to {intended_output_dir}", flush=True)
+                    os.makedirs(intended_output_dir, exist_ok=True)
+                    import shutil
+                    shutil.move(default_loc, os.path.join(intended_output_dir, "last.safetensors"))
+                    print(f"[FIX] Successfully moved to {intended_output_dir}/last.safetensors", flush=True)
+        except Exception as e:
+            print(f"[FIX] Error moving checkpoint: {e}", flush=True)
+        # ------------------------------------------------
 
     except subprocess.CalledProcessError as e:
         print("Training subprocess failed!", flush=True)
