@@ -344,10 +344,12 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config["pretrained_model_name_or_path"] = model_path
         config["train_data_dir"] = train_data_dir
+        # Set output_dir to match upload expectations
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
         config["output_dir"] = output_dir
+        print(f"Training will save to: {output_dir}", flush=True)
 
         if model_type == "sdxl":
             if is_style:
