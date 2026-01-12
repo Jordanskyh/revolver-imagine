@@ -3,7 +3,7 @@
         "unet_lr": 0.0001,
         "text_encoder_lr": 0.0,
         "prior_loss_weight": 1.1,
-        "noise_offset": 0.0,
+        "noise_offset": 0.0355,
         "min_snr_gamma": 7.0,
         "lr_scheduler": "constant",
         "lr_warmup_steps": 0,

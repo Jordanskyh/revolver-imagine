@@ -9,35 +9,40 @@ config:
     - folder_path: /dataset/images
       caption_ext: txt
       cache_latents_to_disk: true
-      resolution: [512, 768, 1024]
+      resolution: [1024] # FIXED: Strict Square for Validator consistency
       is_reg: false
     train:
       batch_size: 1
       steps: 1500
-      lr: 0.00005 # Refined LR for Denoise 0.93
+      lr: 0.00005
       optimizer: adamw8bit
       gradient_accumulation: 1
       noise_scheduler: flowmatch
-      timestep_type: weighted # DETHRONE ADDITION: Focus on primary structure
+      timestep_type: weighted
       dtype: bf16
       cache_text_embeddings: true
       train_unet: true
       train_text_encoder: false
       optimizer_params:
-        weight_decay: 3e-5 # Improved over champion's 1e-5 to prevent overfit
+        weight_decay: 3e-5
       ema_config:
         use_ema: true
-        ema_decay: 0.995 # Stability lock
+        ema_decay: 0.995
       do_cfg: true
-      cfg_scale: 8.0 # Ref Sync
+      cfg_scale: 8.0
     model:
       name_or_path: /cache/models
       arch: qwen_image
       quantize: true
-      qtype: uint3|/cache/hf_cache/qwen_image_torchao_uint3.safetensors # Champion Efficiency
+      qtype: float8 # OPTIMIZED: Upgraded from uint3 for better L2 fidelity
       quantize_te: true
       qtype_te: qfloat8
       low_vram: true
+    adapter:
+      type: lora
+      rank: 128 # OPTIMIZED: High Capacity for LLM-based diffusion
+      alpha: 128
+      dtype: bf16
 meta:
-  name: qwen_image_lora_challenger
-  version: '2.0'
+  name: qwen_image_lora_dethrone
+  version: '2.1'

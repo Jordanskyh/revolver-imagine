@@ -17,24 +17,24 @@
     "data": {
         "gradients-io-tournaments/Qwen-Image": {
             "small": {
-                "unet_lr": 0.00008
+                "unet_lr": 0.00005
             },
             "medium": {
                 "unet_lr": 0.00005
             },
             "large": {
-                "unet_lr": 0.00004
+                "unet_lr": 0.00005
             }
         },
         "gradients-io-tournaments/Qwen-Image-Jib-Mix": {
             "small": {
-                "unet_lr": 0.00008
+                "unet_lr": 0.00005
             },
             "medium": {
                 "unet_lr": 0.00005
             },
             "large": {
-                "unet_lr": 0.00004
+                "unet_lr": 0.00005
             }
         }
     }

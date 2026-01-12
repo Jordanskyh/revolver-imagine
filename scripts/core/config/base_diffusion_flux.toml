@@ -5,8 +5,8 @@ v_parameterization = false
 [additional_network_arguments]
 no_half_vae = true
 network_module = "networks.lora_flux"
-network_dim = 16
-network_alpha = 16
+network_dim = 32
+network_alpha = 32
 
 [optimizer_arguments]
 optimizer_type = "prodigy"

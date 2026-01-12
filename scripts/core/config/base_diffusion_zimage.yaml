@@ -20,11 +20,11 @@ config:
     - folder_path: /dataset/images
       caption_ext: txt
       cache_latents_to_disk: true
-      resolution: [512, 768, 1024]
+      resolution: [1024]
       is_reg: false
     train:
       batch_size: 1
-      steps: 10         # REFERENCE SYNC
+      steps: 1500         # REFERENCE SYNC: Fixed from 10 to 1500 for safety
       cfg_scale: 1      # REFERENCE SYNC
       denoise: 0.9      # REFERENCE SYNC
       lr: 0.0001
