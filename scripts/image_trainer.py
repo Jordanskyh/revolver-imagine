@@ -356,6 +356,8 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
 def run_training(model_type, config_path):
     print(f"Starting training with config: {config_path}", flush=True)
+    with open(config_path, "r") as f:
+        print(f"--- CONFIG CONTENT ---\n{f.read()}\n--- END CONFIG ---", flush=True)
 
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
     
