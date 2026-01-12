@@ -185,6 +185,9 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         with open(config_template_path, "r") as file:
             config = toml.load(file)
 
+        # Inject model path (safetensors)
+        config['model_arguments']['pretrained_model_name_or_path'] = model_path
+
         lrs_config = load_lrs_config(model_type, is_style)
 
         if lrs_config:
