@@ -32,5 +32,5 @@ max_data_loader_n_workers = 2
 steps = 35
 guidance_scale = 10.0
 denoise = 0.75
-resolution = [1024, 1024]
+resolution = "1024,1024"
 seed = 42

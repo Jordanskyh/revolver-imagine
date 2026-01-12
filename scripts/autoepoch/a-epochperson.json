@@ -10,7 +10,7 @@
             "max": 15,
             "config": {
                 "train_batch_size": 1,
-                "max_train_epochs": 200,
+                "max_train_epochs": 45,
                 "save_every_n_epochs": 50
             }
         },
