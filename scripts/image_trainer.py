@@ -343,17 +343,72 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         }
 
         config["pretrained_model_name_or_path"] = model_path
-        config["train_data_dir"] = train_data_dir
-        # Set output_dir to match upload expectations
+        # CHAMPION LOGIC: Dynamic Rank & ConvLoRA Mapping
+    # Maps model hash/name to optimal LoRA settings
+    # 235 (Standard): Dim 32, Conv 4
+    # 467 (High Detail): Dim 64, Conv 4
+    # 699 (Anime/Complex): Dim 96, Conv 4
+    
+    # Default Fallback
+    net_dim = 32
+    net_alpha = 32
+    net_args = ["conv_dim=4", "conv_alpha=4", "dropout=0"] # Enable ConvLoRA by default for stability
+
+    # Known high-capacity models requiring Rank 64
+    rank_64_models = [
+        "SG161222/RealVisXL_V4.0",
+        "GraydientPlatformAPI/albedobase2-xl",
+        "dataautogpt3/ProteusV0.5",
+        "femboysLover/RealisticStockPhoto-fp16",
+        "zenless-lab/sdxl-blue-pencil-xl-v7"
+    ]
+
+    # Known complex models requiring Rank 96
+    rank_96_models = [
+        "cagliostrolab/animagine-xl-4.0"
+    ]
+    
+    # Known lightweight models (Rank 32 is fine) but we keep lists for clarity
+    # "misri/leosamsHelloworldXL_helloworldXL70" -> 32
+    # "dataautogpt3/TempestV0.1" -> 64 (Champion uses 456 mapping which is Rank 64!)
+    
+    # Special Override for Tempest (Style Champion uses Rank 64 for it)
+    if "Tempest" in model_name:
+         rank_64_models.append(model_name)
+
+    if any(m in model_name for m in rank_96_models):
+        net_dim = 96
+        net_alpha = 96
+        logger.info(f"⚡ CHAMPION LOGIC: Applying HIGH CAPACITY (Rank 96) for {model_name}")
+    elif any(m in model_name for m in rank_64_models):
+        net_dim = 64
+        net_alpha = 64
+        logger.info(f"⚡ CHAMPION LOGIC: Applying MEDIUM CAPACITY (Rank 64) for {model_name}")
+    else:
+        logger.info(f"⚡ CHAMPION LOGIC: Applying STANDARD CAPACITY (Rank 32) for {model_name}")
+
+    if model_type == "sdxl":
+        if is_style:
+            # Style specific overrides if needed (Champion uses same logic mostly)
+            pass
+        
+        # Apply logic to config
+        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
+        config["dataset_arguments"]["debug_dataset"] = False 
+        
+        # Network Args
+        if "additional_network_arguments" not in config:
+            config["additional_network_arguments"] = {}
+            
+        config["additional_network_arguments"]["network_dim"] = net_dim
+        config["additional_network_arguments"]["network_alpha"] = net_alpha
+        config["additional_network_arguments"]["network_args"] = net_args
+        
+        # Calculate Output Dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
-        config["output_dir"] = output_dir
-        print(f"Training will save to: {output_dir}", flush=True)
-
-        if model_type == "sdxl":
-            if is_style:
-                network_config = config_mapping.get(network_config_style.get(model_name, 900), config_mapping[900])
+        config["training_arguments"]["output_dir"] = output_dir
                 config["loss_type"] = "l2"
                 config["caption_dropout_probability"] = 0.1 
             else:

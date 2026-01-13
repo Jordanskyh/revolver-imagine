@@ -27,6 +27,7 @@ output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
+gradient_accumulation_steps = 4
 noise_offset_type = "Original"
 noise_offset = 0.0411
 
