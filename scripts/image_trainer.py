@@ -358,8 +358,8 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 config["caption_dropout_probability"] = 0.1 
             else:
                 network_config = config_mapping.get(network_config_person.get(model_name, 467), config_mapping[467])
-                config["loss_type"] = "huber"
-                config["huber_c"] = 0.05 
+                config["loss_type"] = "l2"
+                config["huber_c"] = 0.1 # Not used if loss is l2, but kept for safety/legacy
                 config["caption_dropout_probability"] = 0.75
                 config["flip_aug"] = True 
 

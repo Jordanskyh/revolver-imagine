@@ -9,10 +9,10 @@ network_dim = 32
 network_alpha = 32
 
 [optimizer_arguments]
-optimizer_type = "adamw8bit"
-learning_rate = 1e-4
+optimizer_type = "prodigy"
+learning_rate = 1.0
 max_grad_norm = 1.0
-optimizer_args = [ "weight_decay=0.01", "betas=(0.9,0.999)", "eps=1e-08" ]
+optimizer_args = [ "decouple=True", "d_coef=1", "weight_decay=0.01", "use_bias_correction=True", "safeguard_warmup=True" ]
 lr_scheduler = "constant"
 min_snr_gamma = 5
 
@@ -27,8 +27,8 @@ output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
-multires_noise_iterations = 4
-multires_noise_discount = 0.3
+noise_offset_type = "Original"
+noise_offset = 0.0357
 
 [inference]
 # REFERENSI MUTLAK JURI (SDXL PERSON)
