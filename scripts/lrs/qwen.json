@@ -1,41 +1,52 @@
-{
-    "default": {
-        "unet_lr": 0.00005,
-        "text_encoder_lr": 0.0,
-        "prior_loss_weight": 1.0,
-        "noise_offset": 0.0,
-        "max_grad_norm": 0.5,
-        "lr_scheduler": "constant",
-        "lr_warmup_steps": 0,
-        "min_snr_gamma": 0.0,
-        "optimizer_args": [
-            "weight_decay=0.01",
-            "betas=(0.9, 0.999)",
-            "eps=1e-08"
-        ]
-    },
-    "data": {
-        "gradients-io-tournaments/Qwen-Image": {
-            "small": {
-                "unet_lr": 0.00005
-            },
-            "medium": {
-                "unet_lr": 0.00005
-            },
-            "large": {
-                "unet_lr": 0.00005
-            }
-        },
-        "gradients-io-tournaments/Qwen-Image-Jib-Mix": {
-            "small": {
-                "unet_lr": 0.00005
-            },
-            "medium": {
-                "unet_lr": 0.00005
-            },
-            "large": {
-                "unet_lr": 0.00005
-            }
-        }
-    }
+﻿{
+    "default":  {
+                    "min_snr_gamma":  5,
+                    "noise_offset":  0.0357,
+                    "text_encoder_lr":  1,
+                    "unet_lr":  1
+                },
+    "data":  {
+                 "65f7526e4b4dfff9cfd1a961f40e75649d34f085c246d35d0e025bb235bc635d":  {
+                                                                                          "model_name":  "gradients-io-tournaments/Qwen-Image",
+                                                                                          "medium":  {
+                                                                                                         "min_snr_gamma":  null,
+                                                                                                         "noise_offset":  null,
+                                                                                                         "text_encoder_lr":  null,
+                                                                                                         "unet_lr":  null
+                                                                                                     },
+                                                                                          "small":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    },
+                                                                                          "large":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    }
+                                                                                      },
+                 "f5eea20a2dbc9e3de97243d3ff8935c349fbb4637e4378e43ed2f57ba379cbb7":  {
+                                                                                          "model_name":  "gradients-io-tournaments/Qwen-Image-Jib-Mix",
+                                                                                          "medium":  {
+                                                                                                         "min_snr_gamma":  null,
+                                                                                                         "noise_offset":  null,
+                                                                                                         "text_encoder_lr":  null,
+                                                                                                         "unet_lr":  null
+                                                                                                     },
+                                                                                          "small":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    },
+                                                                                          "large":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    }
+                                                                                      }
+             }
 }

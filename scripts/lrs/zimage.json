@@ -1,30 +1,31 @@
-{
-    "default": {
-        "unet_lr": 0.0001,
-        "text_encoder_lr": 0.0,
-        "prior_loss_weight": 1.0,
-        "noise_offset": 0.0,
-        "lr_scheduler": "constant",
-        "lr_warmup_steps": 0,
-        "min_snr_gamma": 0.0,
-        "max_grad_norm": 1.0,
-        "optimizer_args": [
-            "weight_decay=0.01",
-            "betas=(0.9, 0.999)",
-            "eps=1e-08"
-        ]
-    },
-    "data": {
-        "gradients-io-tournaments/Z-Image-Turbo": {
-            "small": {
-                "unet_lr": 0.0001
-            },
-            "medium": {
-                "unet_lr": 0.0001
-            },
-            "large": {
-                "unet_lr": 0.0001
-            }
-        }
-    }
+﻿{
+    "default":  {
+                    "min_snr_gamma":  5,
+                    "noise_offset":  0.0357,
+                    "text_encoder_lr":  1,
+                    "unet_lr":  1
+                },
+    "data":  {
+                 "17eb2c6bb37a0b176605f6d1b778e113e2cae2c51bfcafb8ba1e7c35d86736f6":  {
+                                                                                          "model_name":  "gradients-io-tournaments/Z-Image-Turbo",
+                                                                                          "medium":  {
+                                                                                                         "min_snr_gamma":  null,
+                                                                                                         "noise_offset":  null,
+                                                                                                         "text_encoder_lr":  null,
+                                                                                                         "unet_lr":  null
+                                                                                                     },
+                                                                                          "small":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    },
+                                                                                          "large":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    }
+                                                                                      }
+             }
 }

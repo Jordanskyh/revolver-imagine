@@ -43,10 +43,14 @@ def merge_model_config(default_config: dict, model_config: dict) -> dict:
     merged = {}
 
     if isinstance(default_config, dict):
-        merged.update(default_config)
+        for k, v in default_config.items():
+            if v is not None:
+                merged[k] = v
 
     if isinstance(model_config, dict):
-        merged.update(model_config)
+        for k, v in model_config.items():
+            if v is not None:
+                merged[k] = v
 
     return merged if merged else None
 
@@ -170,8 +174,12 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_dir = os.path.join(script_dir, "lrs")
 
-    if model_type == "flux":
+    if model_type == ImageModelType.FLUX.value:
         config_file = os.path.join(config_dir, "flux.json")
+    elif model_type == ImageModelType.QWEN_IMAGE.value:
+        config_file = os.path.join(config_dir, "qwen.json")
+    elif model_type == ImageModelType.Z_IMAGE.value:
+        config_file = os.path.join(config_dir, "zimage.json")
     elif is_style:
         config_file = os.path.join(config_dir, "style_config.json")
     else:
