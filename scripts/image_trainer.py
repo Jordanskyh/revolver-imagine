@@ -409,19 +409,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
         config["training_arguments"]["output_dir"] = output_dir
-                config["loss_type"] = "l2"
-                config["caption_dropout_probability"] = 0.1 
-            else:
-                network_config = config_mapping.get(network_config_person.get(model_name, 467), config_mapping[467])
-                config["loss_type"] = "l2"
-                config["huber_c"] = 0.1 # Not used if loss is l2, but kept for safety/legacy
-                config["caption_dropout_probability"] = 0.75
-                config["flip_aug"] = True 
 
-            config["network_module"] = "networks.lora_lycoris" 
-            config["network_dim"] = network_config["network_dim"]
-            config["network_alpha"] = network_config["network_alpha"]
-            config["network_args"] = network_config["network_args"]
         elif model_type == "flux":
             config["loss_type"] = "huber"
             config["huber_c"] = 0.1
