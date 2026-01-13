@@ -264,6 +264,11 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     if value is None:
                         continue
                         
+                    # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
+                    # This avoids creating separate parameter groups that crash Prodigy.
+                    if key == "text_encoder_lr" and lrs_settings.get("unet_lr") == value:
+                         continue
+
                     if key in section_map:
                         section, target_key = section_map[key]
                         if section not in config:
