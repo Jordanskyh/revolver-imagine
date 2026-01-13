@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import core.constants as cst
 import trainer.constants as train_cst
 from trainer.utils.style_detection import detect_styles_in_prompts
 from core.models.utility_models import DpoDatasetType
@@ -26,7 +27,7 @@ def get_image_training_images_dir(task_id: str) -> str:
 def get_image_training_config_template_path(model_type: str, train_data_dir: str) -> tuple[str, bool]:
     model_type = model_type.lower()
     if model_type == ImageModelType.SDXL.value:
-        prompts_path = os.path.join(train_data_dir, "5_lora style")
+        prompts_path = os.path.join(train_data_dir, f"{cst.DIFFUSION_SDXL_REPEATS}_lora style")
         prompts = []
         for file in os.listdir(prompts_path):
             if file.endswith(".txt"):
