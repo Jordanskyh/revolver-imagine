@@ -186,7 +186,7 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         config_file = os.path.join(config_dir, "person_config.json")
     
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8-sig') as f:
             return json.load(f)
     except Exception as e:
         print(f"Warning: Could not load LRS config from {config_file}: {e}", flush=True)
