@@ -410,34 +410,33 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             os.makedirs(output_dir, exist_ok=True)
         config["training_arguments"]["output_dir"] = output_dir
 
-        elif model_type == "flux":
-            config["loss_type"] = "huber"
-            config["huber_c"] = 0.1
-            config["caption_dropout_probability"] = 0.75
-            config["optimizer_type"] = "prodigy"
-            config["learning_rate"] = 1.0
-            config["mixed_precision"] = "bf16"
-            # Flux network modules are handled via base TOML/LRS
+    elif model_type == "flux":
+        config["loss_type"] = "huber"
+        config["huber_c"] = 0.1
+        config["caption_dropout_probability"] = 0.75
+        config["optimizer_type"] = "prodigy"
+        config["learning_rate"] = 1.0
+        config["mixed_precision"] = "bf16"
+        # Flux network modules are handled via base TOML/LRS
 
-
-        dataset_size = 0
-        if os.path.exists(train_data_dir):
-            dataset_size = count_images_in_directory(train_data_dir)
-            if dataset_size > 0:
-                print(f"Counted {dataset_size} images in training directory", flush=True)
-
+    dataset_size = 0
+    if os.path.exists(train_data_dir):
+        dataset_size = count_images_in_directory(train_data_dir)
         if dataset_size > 0:
-            size_config = load_size_based_config(model_type, is_style, dataset_size)
-            if size_config:
-                print(f"Applying size-based config for {dataset_size} images", flush=True)
-                for key, value in size_config.items():
-                    config[key] = value
-        
-        config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
-        save_config_toml(config, config_path)
-        print(f"config is {config}", flush=True)
-        print(f"Created config at {config_path}", flush=True)
-        return config_path
+            print(f"Counted {dataset_size} images in training directory", flush=True)
+
+    if dataset_size > 0:
+        size_config = load_size_based_config(model_type, is_style, dataset_size)
+        if size_config:
+            print(f"Applying size-based config for {dataset_size} images", flush=True)
+            for key, value in size_config.items():
+                config[key] = value
+    
+    config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
+    save_config_toml(config, config_path)
+    print(f"config is {config}", flush=True)
+    print(f"Created config at {config_path}", flush=True)
+    return config_path
 
 
 def run_training(model_type, config_path):
