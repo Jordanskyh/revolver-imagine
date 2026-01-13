@@ -379,13 +379,13 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     if any(m in model_name for m in rank_96_models):
         net_dim = 96
         net_alpha = 96
-        logger.info(f"⚡ CHAMPION LOGIC: Applying HIGH CAPACITY (Rank 96) for {model_name}")
+        print(f"⚡ CHAMPION LOGIC: Applying HIGH CAPACITY (Rank 96) for {model_name}", flush=True)
     elif any(m in model_name for m in rank_64_models):
         net_dim = 64
         net_alpha = 64
-        logger.info(f"⚡ CHAMPION LOGIC: Applying MEDIUM CAPACITY (Rank 64) for {model_name}")
+        print(f"⚡ CHAMPION LOGIC: Applying MEDIUM CAPACITY (Rank 64) for {model_name}", flush=True)
     else:
-        logger.info(f"⚡ CHAMPION LOGIC: Applying STANDARD CAPACITY (Rank 32) for {model_name}")
+        print(f"⚡ CHAMPION LOGIC: Applying STANDARD CAPACITY (Rank 32) for {model_name}", flush=True)
 
     if model_type == "sdxl":
         if is_style:
