@@ -393,13 +393,12 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             pass
         
         # Apply logic to config
-        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
-        config["dataset_arguments"]["debug_dataset"] = False 
-        
-        # Network Args
         if "additional_network_arguments" not in config:
             config["additional_network_arguments"] = {}
+        if "dataset_arguments" not in config:
+            config["dataset_arguments"] = {}
             
+        config["dataset_arguments"]["debug_dataset"] = False
         config["additional_network_arguments"]["network_dim"] = net_dim
         config["additional_network_arguments"]["network_alpha"] = net_alpha
         config["additional_network_arguments"]["network_args"] = net_args
@@ -409,15 +408,37 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
         config["training_arguments"]["output_dir"] = output_dir
+        
+        # Dual Injection for maximum compatibility
+        config["dataset_arguments"]["train_data_dir"] = train_data_dir
+        config["train_data_dir"] = train_data_dir
+        
+        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
+        config["pretrained_model_name_or_path"] = model_path
+        
+        config["dataset_arguments"]["enable_bucket"] = True
+        config["enable_bucket"] = True
+
 
     elif model_type == "flux":
         config["loss_type"] = "huber"
         config["huber_c"] = 0.1
-        config["caption_dropout_probability"] = 0.75
+        config["caption_dropout_probability"] = 0.05
         config["optimizer_type"] = "prodigy"
         config["learning_rate"] = 1.0
         config["mixed_precision"] = "bf16"
-        # Flux network modules are handled via base TOML/LRS
+        
+        # Calculate Output Dir for Flux
+        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        config["training_arguments"]["output_dir"] = output_dir
+        
+        config["dataset_arguments"]["train_data_dir"] = train_data_dir
+        config["train_data_dir"] = train_data_dir
+        
+        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
+        config["pretrained_model_name_or_path"] = model_path
 
     dataset_size = 0
     if os.path.exists(train_data_dir):
