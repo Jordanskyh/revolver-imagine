@@ -18,8 +18,10 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
         
         # Apply specific optimizations
         if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
-            $entry.small.unet_lr = 0.7
-            $entry.small.text_encoder_lr = 0.35
+            # FIX: Prodigy requires same LR for unet and text_encoder
+            # We use 0.5 as a balanced damping value
+            $entry.small.unet_lr = 0.5
+            $entry.small.text_encoder_lr = 0.5
             $entry.small.noise_offset = 0.045
             $entry.small.min_snr_gamma = 5.0
         }
@@ -67,11 +69,10 @@ $zimage_models = @(
     'gradients-io-tournaments/Z-Image-Turbo'
 )
 
-# Generate files
 Create-Registry-File $sdxl_models "scripts/lrs/person_config.json" -isPerson $true
 Create-Registry-File $sdxl_models "scripts/lrs/style_config.json"
 Create-Registry-File $flux_models "scripts/lrs/flux.json"
 Create-Registry-File $qwen_models "scripts/lrs/qwen.json"
 Create-Registry-File $zimage_models "scripts/lrs/zimage.json"
 
-Write-Host "Registries split and updated successfully!"
+Write-Host "Registries fixed with identical LRs for Prodigy compatibility."
