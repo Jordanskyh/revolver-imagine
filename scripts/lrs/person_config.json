@@ -268,10 +268,21 @@
                                                                                                          "unet_lr":  null
                                                                                                      },
                                                                                           "small":  {
-                                                                                                        "min_snr_gamma":  null,
-                                                                                                        "noise_offset":  null,
-                                                                                                        "text_encoder_lr":  null,
-                                                                                                        "unet_lr":  null
+                                                                                                        "unet_lr":  1,
+                                                                                                        "optimizer_type":  "prodigy",
+                                                                                                        "save_every_n_epochs":  10,
+                                                                                                        "optimizer_args":  [
+                                                                                                                               "decouple=True",
+                                                                                                                               "d_coef=1.0",
+                                                                                                                               "weight_decay=0.01",
+                                                                                                                               "use_bias_correction=True",
+                                                                                                                               "safeguard_warmup=True"
+                                                                                                                           ],
+                                                                                                        "noise_offset":  0.0357,
+                                                                                                        "min_snr_gamma":  5,
+                                                                                                        "lr_scheduler":  "constant",
+                                                                                                        "max_train_epochs":  100,
+                                                                                                        "text_encoder_lr":  1
                                                                                                     },
                                                                                           "large":  {
                                                                                                         "min_snr_gamma":  null,

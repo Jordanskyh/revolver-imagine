@@ -32,8 +32,34 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             $entry.large.save_every_n_epochs = 10
         }
 
-        # Custom Optimization for Animagine-XL - MASTERCLASS PRODIGY
-        if ($m -eq "cagliostrolab/animagine-xl-4.0") {
+        # Custom Optimization for Visionix-alpha - TASK SPECIFIC LOGIC
+        if ($m -eq "ehristoforu/Visionix-alpha") {
+            if ($isPerson) {
+                # Target: Recover from -25.01% | Strategy: Prodigy Masterclass (Identity Focus)
+                $entry.small.unet_lr = 1.0
+                $entry.small.text_encoder_lr = 1.0
+                $entry.small.optimizer_type = "prodigy"
+                $entry.small.optimizer_args = @('decouple=True', 'd_coef=1.0', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
+                $entry.small.lr_scheduler = "constant"
+                $entry.small.min_snr_gamma = 5.0
+                $entry.small.noise_offset = 0.0357
+                $entry.small.max_train_epochs = 100
+                $entry.small.save_every_n_epochs = 10
+            } else {
+                # Winner: Task Style (13.20% Lead) | Strategy: AdamW8bit (Composition Focus)
+                $entry.small.unet_lr = 0.0001
+                $entry.small.optimizer_type = "adamw8bit"
+                $entry.small.optimizer_args = @('weight_decay=0.01', 'betas=(0.9,0.999)', 'eps=1e-08')
+                $entry.small.lr_scheduler = "constant"
+                $entry.small.min_snr_gamma = 7.0
+                $entry.small.noise_offset = 0.0411
+                $entry.small.max_train_epochs = 25
+                $entry.small.save_every_n_epochs = 5
+            }
+        }
+
+        # Custom Optimization for Animagine-XL - DOMAIN: PERSON (Fix Underfitting)
+        if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
             # Target Score: < 0.0739 | Strategy: Full Power Prodigy
             $entry.small.unet_lr = 1.0
             $entry.small.text_encoder_lr = 1.0
