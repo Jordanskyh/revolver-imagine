@@ -18,12 +18,12 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
         
         # Apply specific optimizations
         if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
-            # FIX: Prodigy requires same LR for unet and text_encoder
-            # We use 0.5 as a balanced damping value
-            $entry.small.unet_lr = 0.5
-            $entry.small.text_encoder_lr = 0.5
+            # EXTREME DAMPING for Rank 96 stability
+            $entry.small.unet_lr = 0.3
+            $entry.small.text_encoder_lr = 0.3
             $entry.small.noise_offset = 0.045
             $entry.small.min_snr_gamma = 5.0
+            $entry.small.optimizer_args = @('decouple=True', 'd_coef=0.5', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
         }
         
         $data[$hash] = $entry

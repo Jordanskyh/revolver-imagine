@@ -15,10 +15,17 @@
                                                                                                          "unet_lr":  null
                                                                                                      },
                                                                                           "small":  {
+                                                                                                        "optimizer_args":  [
+                                                                                                                               "decouple=True",
+                                                                                                                               "d_coef=0.5",
+                                                                                                                               "weight_decay=0.01",
+                                                                                                                               "use_bias_correction=True",
+                                                                                                                               "safeguard_warmup=True"
+                                                                                                                           ],
                                                                                                         "min_snr_gamma":  5,
                                                                                                         "noise_offset":  0.045,
-                                                                                                        "text_encoder_lr":  0.5,
-                                                                                                        "unet_lr":  0.5
+                                                                                                        "text_encoder_lr":  0.3,
+                                                                                                        "unet_lr":  0.3
                                                                                                     },
                                                                                           "large":  {
                                                                                                         "min_snr_gamma":  null,
