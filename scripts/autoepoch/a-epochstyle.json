@@ -28,7 +28,7 @@
             "max": 60,
             "config": {
                 "train_batch_size": 1,
-                "max_train_epochs": 11,
+                "max_train_epochs": 40,
                 "save_every_n_epochs": 5
             }
         }
