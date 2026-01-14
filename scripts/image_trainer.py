@@ -388,8 +388,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
     # Known complex models requiring Rank 96
     rank_96_models = [
-        "cagliostrolab/animagine-xl-4.0",
-        "femboysLover/RealisticStockPhoto-fp16"
+        "cagliostrolab/animagine-xl-4.0"
     ]
     
     # Known lightweight models (Rank 32 is fine) but we keep lists for clarity

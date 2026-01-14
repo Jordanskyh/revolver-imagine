@@ -252,7 +252,7 @@
                                                                                                                                "use_bias_correction=True",
                                                                                                                                "safeguard_warmup=True"
                                                                                                                            ],
-                                                                                                        "noise_offset":  0.0357,
+                                                                                                        "noise_offset":  0.0303,
                                                                                                         "min_snr_gamma":  7,
                                                                                                         "lr_scheduler":  "constant",
                                                                                                         "max_train_epochs":  40,

@@ -27,7 +27,7 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             $entry.large.lr_warmup_steps = 0
             $entry.large.max_grad_norm = 1.0
             $entry.large.min_snr_gamma = 7.0
-            $entry.large.noise_offset = 0.0357
+            $entry.large.noise_offset = 0.0303
             $entry.large.max_train_epochs = 40
             $entry.large.save_every_n_epochs = 10
         }
