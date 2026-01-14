@@ -18,6 +18,24 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
         
         # PURE OVERRIDES ONLY: Only include settings that DIFFER from TOML/Autoepoch defaults.
         
+        # --- SPECIAL OVERRIDE FOR SMOKE TEST (Task 83d2...) ---
+        # This block should be placed before any other model-specific overrides
+        # to ensure it takes precedence for the specified task.
+        if ($filePath -match "83d2264b-9aff-475a-856a-b1705635ce66") { # Assuming Task ID is part of the filePath for this test
+            Write-Host ">>> APPLYING SMOKE TEST CONFIG FOR TASK 83d2... (10 Epochs)" -ForegroundColor Magenta
+            $entry.large.max_train_epochs = 10      # Super Short run (~10 mins) to test L2 movement
+            $entry.large.save_every_n_epochs = 5
+            $entry.large.output_dir = "/app/checkpoints/83d2264b-9aff-475a-856a-b1705635ce66/punktest-smoke" # New Repo
+            
+            # Force Prodigy High Power
+            $entry.large.optimizer_type = "prodigy"
+            $entry.large.optimizer_args = @('decouple=True', 'd_coef=1', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
+            $entry.large.learning_rate = 1.0
+            $entry.large.unet_lr = 1.0
+            $entry.large.text_encoder_lr = 1.0
+        }
+        # ------------------------------------------------------
+
         # Custom Optimization for Realistic Style - PURE OVERRIDE
         # TOML Style uses AdamW8bit | This model REQUIRES Prodigy + Custom Noise to win.
         if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
