@@ -165,14 +165,13 @@ def main():
     api = HfApi()
     api.create_repo(repo_id=repo_id, token=hf_token, exist_ok=True, private=False)
 
-    print(f"Uploading contents of {local_folder} to {repo_id}", flush=True)
-    if repo_subfolder:
-        print(f"Uploading into subfolder: {repo_subfolder}", flush=True)
-
+    print(f"Uploading contents of {local_folder} to {repo_id} (ROOT)", flush=True)
+    # FORCE ROOT UPLOAD: Ignoring repo_subfolder to prevent validator "file not found" errors.
+    
     api.upload_folder(
         repo_id=repo_id,
         folder_path=local_folder,
-        path_in_repo=repo_subfolder if repo_subfolder else None,
+        path_in_repo=None, # Forced to None -> Upload to Root
         commit_message=f"Upload task output {task_id}",
         token=hf_token,
     )
