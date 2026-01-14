@@ -27,27 +27,6 @@
                                                                                                         "unet_lr":  null
                                                                                                     }
                                                                                       },
-                 "162748f97994bc2ffaafdcfd900e06e245e85a9826fb77aa8568846fb6b3f15d":  {
-                                                                                          "model_name":  "John6666/hassaku-xl-illustrious-v10style-sdxl",
-                                                                                          "medium":  {
-                                                                                                         "min_snr_gamma":  null,
-                                                                                                         "noise_offset":  null,
-                                                                                                         "text_encoder_lr":  null,
-                                                                                                         "unet_lr":  null
-                                                                                                     },
-                                                                                          "small":  {
-                                                                                                        "min_snr_gamma":  null,
-                                                                                                        "noise_offset":  null,
-                                                                                                        "text_encoder_lr":  null,
-                                                                                                        "unet_lr":  null
-                                                                                                    },
-                                                                                          "large":  {
-                                                                                                        "min_snr_gamma":  null,
-                                                                                                        "noise_offset":  null,
-                                                                                                        "text_encoder_lr":  null,
-                                                                                                        "unet_lr":  null
-                                                                                                    }
-                                                                                      },
                  "ad7785f9ff51db0c7e07277f5f3cc474217158f242cc44a58581f56f28017c7d":  {
                                                                                           "model_name":  "ifmain/UltraReal_Fine-Tune",
                                                                                           "medium":  {
@@ -231,11 +210,8 @@
                                                                                                         "unet_lr":  null
                                                                                                     },
                                                                                           "large":  {
-                                                                                                        "save_every_n_epochs":  10,
-                                                                                                        "max_grad_norm":  1,
-                                                                                                        "unet_lr":  1,
+                                                                                                        "unet_lr":  null,
                                                                                                         "optimizer_type":  "prodigy",
-                                                                                                        "lr_warmup_steps":  0,
                                                                                                         "optimizer_args":  [
                                                                                                                                "decouple=True",
                                                                                                                                "d_coef=1.0",
@@ -244,10 +220,8 @@
                                                                                                                                "safeguard_warmup=True"
                                                                                                                            ],
                                                                                                         "noise_offset":  0.0303,
-                                                                                                        "min_snr_gamma":  7,
-                                                                                                        "lr_scheduler":  "constant",
-                                                                                                        "max_train_epochs":  40,
-                                                                                                        "text_encoder_lr":  1
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "text_encoder_lr":  null
                                                                                                     }
                                                                                       },
                  "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8":  {
@@ -259,19 +233,10 @@
                                                                                                          "unet_lr":  null
                                                                                                      },
                                                                                           "small":  {
-                                                                                                        "unet_lr":  0.0001,
-                                                                                                        "optimizer_type":  "adamw8bit",
-                                                                                                        "save_every_n_epochs":  5,
-                                                                                                        "optimizer_args":  [
-                                                                                                                               "weight_decay=0.01",
-                                                                                                                               "betas=(0.9,0.999)",
-                                                                                                                               "eps=1e-08"
-                                                                                                                           ],
-                                                                                                        "noise_offset":  0.0411,
-                                                                                                        "min_snr_gamma":  7,
-                                                                                                        "lr_scheduler":  "constant",
-                                                                                                        "max_train_epochs":  25,
-                                                                                                        "text_encoder_lr":  null
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
                                                                                                     },
                                                                                           "large":  {
                                                                                                         "min_snr_gamma":  null,
@@ -490,6 +455,27 @@
                                                                                                         "unet_lr":  null
                                                                                                     }
                                                                                       },
+                 "2b2d23c68c5429f8108bb6f80e20cc08bbed1d3210bbba21bd674a767e2695b1":  {
+                                                                                          "model_name":  "zenless-lab/sdxl-anima-pencil-xl-v5",
+                                                                                          "medium":  {
+                                                                                                         "min_snr_gamma":  null,
+                                                                                                         "noise_offset":  null,
+                                                                                                         "text_encoder_lr":  null,
+                                                                                                         "unet_lr":  null
+                                                                                                     },
+                                                                                          "small":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    },
+                                                                                          "large":  {
+                                                                                                        "min_snr_gamma":  null,
+                                                                                                        "noise_offset":  null,
+                                                                                                        "text_encoder_lr":  null,
+                                                                                                        "unet_lr":  null
+                                                                                                    }
+                                                                                      },
                  "2f2560699519e9904840f4279c6e76e8573819da773ec4b0c6a689e606508be3":  {
                                                                                           "model_name":  "recoilme/colorfulxl",
                                                                                           "medium":  {
@@ -574,8 +560,8 @@
                                                                                                         "unet_lr":  null
                                                                                                     }
                                                                                       },
-                 "2b2d23c68c5429f8108bb6f80e20cc08bbed1d3210bbba21bd674a767e2695b1":  {
-                                                                                          "model_name":  "zenless-lab/sdxl-anima-pencil-xl-v5",
+                 "162748f97994bc2ffaafdcfd900e06e245e85a9826fb77aa8568846fb6b3f15d":  {
+                                                                                          "model_name":  "John6666/hassaku-xl-illustrious-v10style-sdxl",
                                                                                           "medium":  {
                                                                                                          "min_snr_gamma":  null,
                                                                                                          "noise_offset":  null,
