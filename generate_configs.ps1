@@ -16,9 +16,8 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
-        # Apply specific optimizations
+        # Keep Animagine optimization in Person registry ONLY
         if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
-            # EXTREME DAMPING for Rank 96 stability
             $entry.small.unet_lr = 0.3
             $entry.small.text_encoder_lr = 0.3
             $entry.small.noise_offset = 0.045
@@ -30,11 +29,12 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
     }
 
     $json = @{
+        # Set default LR to null so it inherits from TOML (AdamW8bit friendly)
         default = @{
-            unet_lr = 1.0
-            text_encoder_lr = 1.0
-            noise_offset = 0.0357
-            min_snr_gamma = 5.0
+            unet_lr = $null
+            text_encoder_lr = $null
+            noise_offset = $null
+            min_snr_gamma = $null
         }
         data = $data
     } | ConvertTo-Json -Depth 10
@@ -75,4 +75,4 @@ Create-Registry-File $flux_models "scripts/lrs/flux.json"
 Create-Registry-File $qwen_models "scripts/lrs/qwen.json"
 Create-Registry-File $zimage_models "scripts/lrs/zimage.json"
 
-Write-Host "Registries fixed with identical LRs for Prodigy compatibility."
+Write-Host "Registries reset to TOML Defaults (Safe Mode)."

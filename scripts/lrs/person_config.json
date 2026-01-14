@@ -1,9 +1,9 @@
 ﻿{
     "default":  {
-                    "min_snr_gamma":  5,
-                    "noise_offset":  0.0357,
-                    "text_encoder_lr":  1,
-                    "unet_lr":  1
+                    "min_snr_gamma":  null,
+                    "noise_offset":  null,
+                    "text_encoder_lr":  null,
+                    "unet_lr":  null
                 },
     "data":  {
                  "70ff32b896771e2c67412f6a8299e0bf831705bb714af7e810c1466de783cdd0":  {
