@@ -238,10 +238,13 @@
                                                                                                         "unet_lr":  null
                                                                                                     },
                                                                                           "large":  {
-                                                                                                        "min_snr_gamma":  null,
-                                                                                                        "noise_offset":  null,
-                                                                                                        "text_encoder_lr":  null,
-                                                                                                        "unet_lr":  null
+                                                                                                        "max_grad_norm":  1,
+                                                                                                        "unet_lr":  8E-05,
+                                                                                                        "lr_warmup_steps":  42,
+                                                                                                        "noise_offset":  0.0357,
+                                                                                                        "min_snr_gamma":  5,
+                                                                                                        "lr_scheduler":  "cosine_with_restarts",
+                                                                                                        "text_encoder_lr":  4E-05
                                                                                                     }
                                                                                       },
                  "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8":  {

@@ -16,6 +16,18 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
+        # Custom Optimization for Task 3 (Realistic Style) - Dethrone Strategy
+        if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
+            # Bucket: Large (40 images) | Target: Beat 0.0356
+            $entry.large.unet_lr = 8e-5
+            $entry.large.text_encoder_lr = 4e-5
+            $entry.large.lr_scheduler = "cosine_with_restarts"
+            $entry.large.lr_warmup_steps = 42
+            $entry.large.max_grad_norm = 1.0
+            $entry.large.min_snr_gamma = 5.0
+            $entry.large.noise_offset = 0.0357
+        }
+
         # Keep Animagine optimization in Person registry ONLY
         if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
             $entry.small.unet_lr = 0.3
