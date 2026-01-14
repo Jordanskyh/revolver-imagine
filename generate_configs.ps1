@@ -18,11 +18,15 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
         
         # PURE OVERRIDES ONLY: Only include settings that DIFFER from TOML/Autoepoch defaults.
         
-        # Override for RealisticStockPhoto (Style) to use Prodigy instead of default AdamW8bit
-        if (-not $isPerson -and $m -eq "femboysLover/RealisticStockPhoto-fp16") {
+        # Custom Optimization for Realistic Style - PURE OVERRIDE
+        # TOML Style uses AdamW8bit | This model REQUIRES Prodigy + Custom Noise to win.
+        if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
             $entry.large.optimizer_type = "prodigy"
             $entry.large.optimizer_args = @('decouple=True', 'd_coef=1.0', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
             $entry.large.noise_offset = 0.0303
+            # Evidence: -10.45% Gap | Hypo: High variance (0.053) needs more steps to stabilize.
+            $entry.large.max_train_epochs = 40
+            $entry.large.save_every_n_epochs = 10
         }
 
         # All other models and Person tasks run on Natural Defaults.

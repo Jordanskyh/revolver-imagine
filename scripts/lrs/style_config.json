@@ -212,6 +212,7 @@
                                                                                           "large":  {
                                                                                                         "unet_lr":  null,
                                                                                                         "optimizer_type":  "prodigy",
+                                                                                                        "save_every_n_epochs":  10,
                                                                                                         "optimizer_args":  [
                                                                                                                                "decouple=True",
                                                                                                                                "d_coef=1.0",
@@ -221,6 +222,7 @@
                                                                                                                            ],
                                                                                                         "noise_offset":  0.0303,
                                                                                                         "min_snr_gamma":  null,
+                                                                                                        "max_train_epochs":  40,
                                                                                                         "text_encoder_lr":  null
                                                                                                     }
                                                                                       },
