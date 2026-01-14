@@ -15,6 +15,8 @@
                                                                                                          "unet_lr":  null
                                                                                                      },
                                                                                           "small":  {
+                                                                                                        "unet_lr":  0.3,
+                                                                                                        "save_every_n_epochs":  20,
                                                                                                         "optimizer_args":  [
                                                                                                                                "decouple=True",
                                                                                                                                "d_coef=0.5",
@@ -22,10 +24,10 @@
                                                                                                                                "use_bias_correction=True",
                                                                                                                                "safeguard_warmup=True"
                                                                                                                            ],
-                                                                                                        "min_snr_gamma":  5,
                                                                                                         "noise_offset":  0.045,
-                                                                                                        "text_encoder_lr":  0.3,
-                                                                                                        "unet_lr":  0.3
+                                                                                                        "min_snr_gamma":  5,
+                                                                                                        "max_train_epochs":  160,
+                                                                                                        "text_encoder_lr":  0.3
                                                                                                     },
                                                                                           "large":  {
                                                                                                         "min_snr_gamma":  null,
@@ -239,12 +241,12 @@
                                                                                                     },
                                                                                           "large":  {
                                                                                                         "max_grad_norm":  1,
-                                                                                                        "unet_lr":  8E-05,
+                                                                                                        "unet_lr":  0.0001,
                                                                                                         "lr_warmup_steps":  42,
                                                                                                         "noise_offset":  0.0357,
                                                                                                         "min_snr_gamma":  5,
                                                                                                         "lr_scheduler":  "cosine_with_restarts",
-                                                                                                        "text_encoder_lr":  4E-05
+                                                                                                        "text_encoder_lr":  0.0001
                                                                                                     }
                                                                                       },
                  "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8":  {

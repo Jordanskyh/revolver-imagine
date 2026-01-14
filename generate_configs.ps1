@@ -16,11 +16,10 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
-        # Custom Optimization for Task 3 (Realistic Style) - Dethrone Strategy
+        # Custom Optimization for Task 3 (Realistic Style) - TOURNAMENT FINAL
         if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
-            # Bucket: Large (40 images) | Target: Beat 0.0356
-            $entry.large.unet_lr = 8e-5
-            $entry.large.text_encoder_lr = 4e-5
+            $entry.large.unet_lr = 1e-4
+            $entry.large.text_encoder_lr = 1e-4
             $entry.large.lr_scheduler = "cosine_with_restarts"
             $entry.large.lr_warmup_steps = 42
             $entry.large.max_grad_norm = 1.0
@@ -28,13 +27,17 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             $entry.large.noise_offset = 0.0357
         }
 
-        # Keep Animagine optimization in Person registry ONLY
+        # Custom Optimization for Task 2 (Animagine-XL) - TOURNAMENT FINAL
         if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
+            # Target Score: < 0.0739 (We already hit 0.06 in peaks!)
             $entry.small.unet_lr = 0.3
             $entry.small.text_encoder_lr = 0.3
             $entry.small.noise_offset = 0.045
             $entry.small.min_snr_gamma = 5.0
             $entry.small.optimizer_args = @('decouple=True', 'd_coef=0.5', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
+            # HARD OVERRIDE: Force 160 epochs to fix the 35-epoch underfitting
+            $entry.small.max_train_epochs = 160
+            $entry.small.save_every_n_epochs = 20
         }
         
         $data[$hash] = $entry
