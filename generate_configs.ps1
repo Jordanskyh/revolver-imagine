@@ -16,14 +16,15 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
-        # Custom Optimization for Task 3 (Realistic Style) - TOURNAMENT FINAL
+        # Custom Optimization for Task 3 (Realistic Style) - STRATEGIST FINAL SQUEEZE
         if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
-            $entry.large.unet_lr = 1e-4
-            $entry.large.text_encoder_lr = 1e-4
-            $entry.large.lr_scheduler = "cosine_with_restarts"
-            $entry.large.lr_warmup_steps = 42
-            $entry.large.max_grad_norm = 1.0
-            $entry.large.min_snr_gamma = 5.0
+            # Goal: Force Text Adherence (Beat 0.0356)
+            $entry.large.unet_lr = 1.0e-4
+            $entry.large.text_encoder_lr = 2.5e-4  # AGGRESSIVE TE PUSH
+            $entry.large.lr_scheduler = "constant"
+            $entry.large.lr_warmup_steps = 0
+            $entry.large.max_grad_norm = 0.5       # Tight clipping for high TE LR
+            $entry.large.min_snr_gamma = 7.0       # Tempest Logic
             $entry.large.noise_offset = 0.0357
         }
 

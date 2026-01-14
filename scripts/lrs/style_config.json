@@ -231,13 +231,13 @@
                                                                                                         "unet_lr":  null
                                                                                                     },
                                                                                           "large":  {
-                                                                                                        "max_grad_norm":  1,
+                                                                                                        "max_grad_norm":  0.5,
                                                                                                         "unet_lr":  0.0001,
-                                                                                                        "lr_warmup_steps":  42,
+                                                                                                        "lr_warmup_steps":  0,
                                                                                                         "noise_offset":  0.0357,
-                                                                                                        "min_snr_gamma":  5,
-                                                                                                        "lr_scheduler":  "cosine_with_restarts",
-                                                                                                        "text_encoder_lr":  0.0001
+                                                                                                        "min_snr_gamma":  7,
+                                                                                                        "lr_scheduler":  "constant",
+                                                                                                        "text_encoder_lr":  0.00025
                                                                                                     }
                                                                                       },
                  "7637327a8414801bf0bb4d6d1b574dd95c05525165ee271cc085b64f89c8cba8":  {
