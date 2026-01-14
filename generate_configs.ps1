@@ -16,9 +16,9 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
-        # Custom Optimization for Task 3 (Realistic Style) - PRODIGY HIGH CAPACITY
+        # Custom Optimization for Realistic Style - MASTERCLASS PRODIGY
         if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
-            # Goal: Beat 0.0356 | Strategy: Balanced Autopilot (Prodigy)
+            # Target Score: < 0.0356 | Strategy: Full Power Prodigy
             $entry.large.unet_lr = 1.0
             $entry.large.text_encoder_lr = 1.0
             $entry.large.optimizer_type = "prodigy"
@@ -32,15 +32,15 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             $entry.large.save_every_n_epochs = 10
         }
 
-        # Custom Optimization for Task 2 (Animagine-XL) - TOURNAMENT FINAL
-        if ($isPerson -and $m -eq "cagliostrolab/animagine-xl-4.0") {
-            # Target Score: < 0.0739 (We already hit 0.06 in peaks!)
-            $entry.small.unet_lr = 0.3
-            $entry.small.text_encoder_lr = 0.3
-            $entry.small.noise_offset = 0.045
-            $entry.small.min_snr_gamma = 5.0
-            $entry.small.optimizer_args = @('decouple=True', 'd_coef=0.5', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
-            # HARD OVERRIDE: Force 160 epochs to fix the 35-epoch underfitting
+        # Custom Optimization for Animagine-XL - MASTERCLASS PRODIGY
+        if ($m -eq "cagliostrolab/animagine-xl-4.0") {
+            # Target Score: < 0.0739 | Strategy: Full Power Prodigy
+            $entry.small.unet_lr = 1.0
+            $entry.small.text_encoder_lr = 1.0
+            $entry.small.noise_offset = 0.0357
+            $entry.small.min_snr_gamma = 7.0
+            $entry.small.optimizer_args = @('decouple=True', 'd_coef=1.0', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
+            # Consistent 160 epochs with higher d_coef to ensure convergence
             $entry.small.max_train_epochs = 160
             $entry.small.save_every_n_epochs = 20
         }

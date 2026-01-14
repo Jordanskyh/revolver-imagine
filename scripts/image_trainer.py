@@ -254,6 +254,8 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     "noise_offset": ("training_arguments", "noise_offset"),
                     "max_grad_norm": ("optimizer_arguments", "max_grad_norm"),
                     "lr_scheduler": ("optimizer_arguments", "lr_scheduler"),
+                    "lr_warmup_steps": ("optimizer_arguments", "lr_warmup_steps"),
+                    "optimizer_type": ("optimizer_arguments", "optimizer_type"),
                     "optimizer_args": ("optimizer_arguments", "optimizer_args"),
                     "network_dim": ("additional_network_arguments", "network_dim"),
                     "network_alpha": ("additional_network_arguments", "network_alpha"),
@@ -266,7 +268,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                         
                     # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
                     # This avoids creating separate parameter groups that crash Prodigy.
-                    if key == "text_encoder_lr" and lrs_settings.get("unet_lr") == value:
+                    if key == "text_encoder_lr" and str(lrs_settings.get("unet_lr")) == str(value):
                          continue
 
                     if key in section_map:
