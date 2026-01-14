@@ -16,16 +16,20 @@ function Create-Registry-File($models, $filePath, $isPerson = $false) {
             large = @{ unet_lr = $null; text_encoder_lr = $null; noise_offset = $null; min_snr_gamma = $null }
         }
         
-        # Custom Optimization for Task 3 (Realistic Style) - STRATEGIST FINAL SQUEEZE
+        # Custom Optimization for Task 3 (Realistic Style) - PRODIGY HIGH CAPACITY
         if ($m -eq "femboysLover/RealisticStockPhoto-fp16") {
-            # Goal: Force Text Adherence (Beat 0.0356)
-            $entry.large.unet_lr = 1.0e-4
-            $entry.large.text_encoder_lr = 2.5e-4  # AGGRESSIVE TE PUSH
+            # Goal: Beat 0.0356 | Strategy: Balanced Autopilot (Prodigy)
+            $entry.large.unet_lr = 1.0
+            $entry.large.text_encoder_lr = 1.0
+            $entry.large.optimizer_type = "prodigy"
+            $entry.large.optimizer_args = @('decouple=True', 'd_coef=1.0', 'weight_decay=0.01', 'use_bias_correction=True', 'safeguard_warmup=True')
             $entry.large.lr_scheduler = "constant"
             $entry.large.lr_warmup_steps = 0
-            $entry.large.max_grad_norm = 0.5       # Tight clipping for high TE LR
-            $entry.large.min_snr_gamma = 7.0       # Tempest Logic
+            $entry.large.max_grad_norm = 1.0
+            $entry.large.min_snr_gamma = 7.0
             $entry.large.noise_offset = 0.0357
+            $entry.large.max_train_epochs = 40
+            $entry.large.save_every_n_epochs = 10
         }
 
         # Custom Optimization for Task 2 (Animagine-XL) - TOURNAMENT FINAL
