@@ -1,35 +1,44 @@
 {
     "default": {
         "train_batch_size": 1,
-        "max_train_epochs": 15,
-        "save_every_n_epochs": 5
+        "max_train_epochs": 20,
+        "save_every_n_epochs": 10,
+        "optimizer_type": "prodigy",
+        "optimizer_args": [
+            "decouple=True",
+            "d_coef=0.8",
+            "weight_decay=0.01"
+        ],
+        "loss_type": "huber",
+        "huber_c": 0.1,
+        "min_snr_gamma": 5
     },
     "size_ranges": [
         {
             "min": 1,
             "max": 15,
             "config": {
-                "train_batch_size": 1,
-                "max_train_epochs": 300,
-                "save_every_n_epochs": 50
+                "max_train_epochs": 150,
+                "save_every_n_epochs": 50,
+                "d_coef": 0.8
             }
         },
         {
             "min": 16,
-            "max": 35,
+            "max": 40,
             "config": {
-                "train_batch_size": 1,
-                "max_train_epochs": 100,
-                "save_every_n_epochs": 20
+                "max_train_epochs": 120,
+                "save_every_n_epochs": 30,
+                "d_coef": 0.8
             }
         },
         {
-            "min": 36,
-            "max": 60,
+            "min": 41,
+            "max": 100,
             "config": {
-                "train_batch_size": 1,
-                "max_train_epochs": 50,
-                "save_every_n_epochs": 10
+                "max_train_epochs": 80,
+                "save_every_n_epochs": 20,
+                "d_coef": 0.8
             }
         }
     ]

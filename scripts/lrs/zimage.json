@@ -9,8 +9,8 @@
         "17eb2c6bb37a0b176605f6d1b778e113e2cae2c51bfcafb8ba1e7c35d86736f6": {
             "model_name": "gradients-io-tournaments/Z-Image-Turbo",
             "small": {
-                "max_train_epochs": 150,
-                "save_every_n_epochs": 10,
+                "max_train_epochs": 300,
+                "save_every_n_epochs": 50,
                 "optimizer_type": "prodigy",
                 "optimizer_args": [
                     "decouple=True",
@@ -23,8 +23,8 @@
                 "text_encoder_lr": 1.0
             },
             "medium": {
-                "max_train_epochs": 100,
-                "save_every_n_epochs": 10,
+                "max_train_epochs": 200,
+                "save_every_n_epochs": 40,
                 "optimizer_type": "prodigy",
                 "optimizer_args": [
                     "decouple=True",

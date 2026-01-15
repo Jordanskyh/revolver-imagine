@@ -5,17 +5,6 @@ config:
   - type: diffusion_trainer
     training_folder: /app/checkpoints
     device: cuda
-    network:
-      type: lora
-      linear: 128      # Over-Capacity (Champion was 64)
-      linear_alpha: 128
-      conv: 64         # Over-Density (Champion was 32)
-      conv_alpha: 64
-    save:
-      dtype: bf16
-      save_every: 250
-      max_step_saves_to_keep: 4
-      save_format: diffusers
     datasets:
     - folder_path: /dataset/images
       caption_ext: txt
@@ -24,18 +13,16 @@ config:
       is_reg: false
     train:
       batch_size: 1
-      steps: 1500         # REFERENCE SYNC: Fixed from 10 to 1500 for safety
-      cfg_scale: 1      # REFERENCE SYNC
-      denoise: 0.9      # REFERENCE SYNC
+      steps: 2000
       lr: 0.0001
       optimizer: adamw8bit
       gradient_checkpointing: true
       noise_scheduler: flowmatch
-      timestep_type: weighted # Phase-1 focus
+      timestep_type: weighted
       dtype: bf16
       ema_config:
         use_ema: true
-        ema_decay: 0.995
+        ema_decay: 0.995 # OPTIMIZED: Higher stability for Turbo convergence
     model:
       name_or_path: /cache/models
       arch: zimage:turbo
@@ -43,7 +30,13 @@ config:
       qtype: qfloat8
       quantize_te: true
       qtype_te: qfloat8
-      assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors # Champion Secret
+      assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors
+    adapter:
+      type: lora
+      rank: 32
+      alpha: 32
+      conv_dim: 32 # OPTIMIZED: Better spatial detail for L2
+      conv_alpha: 32
 meta:
-  name: zimage_lora_challenger
+  name: zimage_lora_dethrone
   version: '2.0'

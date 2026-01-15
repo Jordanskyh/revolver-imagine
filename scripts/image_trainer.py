@@ -177,76 +177,228 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         print(f"Warning: Could not load LRS config from {config_file}: {e}", flush=True)
         return None
 
-def create_config(task_id, model_path, model_name, model_type, expected_repo_name, trigger_word: str | None = None):
-    train_data_dir = train_paths.get_image_training_images_dir(task_id)
+    # --- LAYER 2: DICTIONARY & MAPPING (CHAMPION LOGIC) ---
+    network_config_person = {
+        "stabilityai/stable-diffusion-xl-base-1.0": 235,
+        "Lykon/dreamshaper-xl-1-0": 235,
+        "Lykon/art-diffusion-xl-0.9": 235,
+        "SG161222/RealVisXL_V4.0": 467,
+        "stablediffusionapi/protovision-xl-v6.6": 235,
+        "stablediffusionapi/omnium-sdxl": 235,
+        "GraydientPlatformAPI/realism-engine2-xl": 235,
+        "GraydientPlatformAPI/albedobase2-xl": 467,
+        "KBlueLeaf/Kohaku-XL-Zeta": 235,
+        "John6666/hassaku-xl-illustrious-v10style-sdxl": 228,
+        "John6666/nova-anime-xl-pony-v5-sdxl": 235,
+        "cagliostrolab/animagine-xl-4.0": 699,
+        "dataautogpt3/CALAMITY": 235,
+        "dataautogpt3/ProteusSigma": 235,
+        "dataautogpt3/ProteusV0.5": 467,
+        "dataautogpt3/TempestV0.1": 456,
+        "ehristoforu/Visionix-alpha": 235,
+        "femboysLover/RealisticStockPhoto-fp16": 467,
+        "fluently/Fluently-XL-Final": 228,
+        "mann-e/Mann-E_Dreams": 456,
+        "misri/leosamsHelloworldXL_helloworldXL70": 235,
+        "misri/zavychromaxl_v90": 235,
+        "openart-custom/DynaVisionXL": 228,
+        "recoilme/colorfulxl": 228,
+        "zenless-lab/sdxl-aam-xl-anime-mix": 456,
+        "zenless-lab/sdxl-anima-pencil-xl-v5": 228,
+        "zenless-lab/sdxl-anything-xl": 228,
+        "zenless-lab/sdxl-blue-pencil-xl-v7": 467,
+        "Corcelio/mobius": 228,
+        "GHArt/Lah_Mysterious_SDXL_V4.0_xl_fp16": 235,
+        "OnomaAIResearch/Illustrious-xl-early-release-v0": 228,
+        "bghira/terminus-xl-velocity-v2": 235,
+        "ifmain/UltraReal_Fine-Tune": 467
+    }
 
-    config_template_path, is_style = train_paths.get_image_training_config_template_path(model_type, train_data_dir)
+    network_config_style = {
+        "stabilityai/stable-diffusion-xl-base-1.0": 235,
+        "Lykon/dreamshaper-xl-1-0": 235,
+        "Lykon/art-diffusion-xl-0.9": 235,
+        "SG161222/RealVisXL_V4.0": 235,
+        "stablediffusionapi/protovision-xl-v6.6": 235,
+        "stablediffusionapi/omnium-sdxl": 235,
+        "GraydientPlatformAPI/realism-engine2-xl": 235,
+        "GraydientPlatformAPI/albedobase2-xl": 235,
+        "KBlueLeaf/Kohaku-XL-Zeta": 235,
+        "John6666/hassaku-xl-illustrious-v10style-sdxl": 235,
+        "John6666/nova-anime-xl-pony-v5-sdxl": 235,
+        "cagliostrolab/animagine-xl-4.0": 235,
+        "dataautogpt3/CALAMITY": 235,
+        "dataautogpt3/ProteusSigma": 235,
+        "dataautogpt3/ProteusV0.5": 235,
+        "dataautogpt3/TempestV0.1": 500,
+        "ehristoforu/Visionix-alpha": 235,
+        "femboysLover/RealisticStockPhoto-fp16": 235,
+        "fluently/Fluently-XL-Final": 235,
+        "mann-e/Mann-E_Dreams": 235,
+        "misri/leosamsHelloworldXL_helloworldXL70": 235,
+        "misri/zavychromaxl_v90": 235,
+        "openart-custom/DynaVisionXL": 235,
+        "recoilme/colorfulxl": 235,
+        "zenless-lab/sdxl-aam-xl-anime-mix": 235,
+        "zenless-lab/sdxl-anima-pencil-xl-v5": 235,
+        "zenless-lab/sdxl-anything-xl": 235,
+        "zenless-lab/sdxl-blue-pencil-xl-v7": 235,
+        "Corcelio/mobius": 235,
+        "GHArt/Lah_Mysterious_SDXL_V4.0_xl_fp16": 235,
+        "OnomaAIResearch/Illustrious-xl-early-release-v0": 235,
+        "bghira/terminus-xl-velocity-v2": 235,
+        "ifmain/UltraReal_Fine-Tune": 235
+    }
+
+    network_config_flux = {
+        "dataautogpt3/FLUX-MonochromeManga": 350,
+        "mikeyandfriends/PixelWave_FLUX.1-dev_03": 350,
+        "rayonlabs/FLUX.1-dev": 350,
+        "mhnakif/fluxunchained-dev": 350
+    }
+
+    network_config_qwen = {
+        "gradients-io-tournaments/Qwen-Image": 888,
+        "gradients-io-tournaments/Qwen-Image-Jib-Mix": 888
+    }
+
+    config_mapping = {
+        228: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
+        235: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
+        456: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
+        467: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
+        699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
+        900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
+        500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
+        350: {"network_dim": 32, "network_alpha": 32, "network_args": []},
+        888: {"network_dim": 128, "network_alpha": 128, "network_args": []},
+        999: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=32", "conv_alpha=32"]}
+    }
+
+    # Determine Model Config ID
+    if model_type == "z-image":
+        config_id = 999
+    elif model_type == "flux":
+        config_id = network_config_flux.get(model_name, 350)
+    elif model_type == "qwen-image":
+        config_id = network_config_qwen.get(model_name, 888)
+    else:
+        target_dict = network_config_style if is_style else network_config_person
+        config_id = target_dict.get(model_name, 235)
+
+    model_params = config_mapping.get(config_id, config_mapping[235])
+    net_dim = model_params["network_dim"]
+    net_alpha = model_params["network_alpha"]
+    net_args = model_params["network_args"]
+
+    print(f"⚡ JORDANSKY LAYER 2: Model '{model_name}' Rank {net_dim}", flush=True)
 
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
     
+    # --- PREPARE OVERRIDES (LRS & AUTOEPOCH) ---
+    lrs_settings = None
+    size_config = None
+    
+    lrs_config = load_lrs_config(model_type, is_style)
+    if lrs_config:
+        model_hash = hash_model(model_name)
+        dataset_size = count_images_in_directory(train_data_dir)
+        lrs_settings = get_config_for_model(lrs_config, model_hash, dataset_size)
+
+    dataset_size = count_images_in_directory(train_data_dir)
+    if dataset_size > 0:
+        size_config = load_size_based_config(model_type, is_style, dataset_size)
+
     if is_ai_toolkit:
         with open(config_template_path, "r") as file:
             config = yaml.safe_load(file)
-        if 'config' in config and 'process' in config['config']:
-            for process in config['config']['process']:
-                if 'model' in process:
-                    process['model']['name_or_path'] = model_path
-                    if 'training_folder' in process:
-                        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
-                        if not os.path.exists(output_dir):
-                            os.makedirs(output_dir, exist_ok=True)
-                        process['training_folder'] = output_dir
-                
-                if 'datasets' in process:
-                    for dataset in process['datasets']:
-                        dataset['folder_path'] = train_data_dir
-
-                if trigger_word:
-                    process['trigger_word'] = trigger_word
         
+        process = config['config']['process'][0]
+        process['model']['name_or_path'] = model_path
+        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
+        if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
+        process['training_folder'] = output_dir
+        
+        for dataset in process['datasets']:
+            dataset['folder_path'] = train_data_dir
+
+        if 'adapter' in process:
+            process['adapter']['rank'] = net_dim
+            process['adapter']['alpha'] = net_alpha
+        
+        # Apply Overrides to YAML
+        if 'train' not in process: process['train'] = {}
+        
+        # Helper to calculate steps based on epochs for AI-Toolkit
+        def calculate_steps(epochs):
+            batch_size = process.get('train', {}).get('batch_size', 1)
+            dataset_size = count_images_in_directory(train_data_dir)
+            if dataset_size == 0: return epochs # Fallback
+            return int(epochs * (dataset_size / batch_size))
+
+        # Priority 1: Autoepoch
+        if size_config:
+            for key, value in size_config.items():
+                if key == "max_train_epochs": 
+                    process['train']['steps'] = calculate_steps(value)
+                elif key == "optimizer_type": 
+                    process['train']['optimizer'] = value
+                else: 
+                    process['train'][key] = value
+
+        # Priority 2: LRS (Superior)
+        if lrs_settings:
+            for key, value in lrs_settings.items():
+                if key in ["unet_lr", "text_encoder_lr", "learning_rate"]: 
+                    process['train']['lr'] = value
+                elif key in ["optimizer_type", "optimizer"]: 
+                    process['train']['optimizer'] = value
+                elif key in ["max_train_epochs", "steps"]: 
+                    calculated_val = calculate_steps(value) if key == "max_train_epochs" else value
+                    process['train']['steps'] = calculated_val
+                else: 
+                    process['train'][key] = value
+
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.yaml")
         save_config(config, config_path)
-        print(f"Created ai-toolkit config at {config_path}", flush=True)
         return config_path
     else:
         with open(config_template_path, "r") as file:
             config = toml.load(file)
 
-        # Inject (safetensors)
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
+        config['train_data_dir'] = train_data_dir
+        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
+        if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
+        config['output_dir'] = output_dir
 
-        lrs_config = load_lrs_config(model_type, is_style)
+        # Apply Overrides to TOML
+        section_map = {
+            "unet_lr": ("optimizer_arguments", "learning_rate"),
+            "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
+            "min_snr_gamma": ("optimizer_arguments", "min_snr_gamma"),
+            "noise_offset": ("training_arguments", "noise_offset"),
+            "optimizer_type": ("optimizer_arguments", "optimizer_type"),
+            "optimizer_args": ("optimizer_arguments", "optimizer_args"),
+        }
 
-        if lrs_config:
-            model_hash = hash_model(model_name)
-            
-            # Count images in training directory for size-specific LR tuning
-            dataset_size = count_images_in_directory(train_data_dir)
-            
-            lrs_settings = get_config_for_model(lrs_config, model_hash, dataset_size)
+        # Apply Size Config First
+        if size_config:
+            for key, value in size_config.items():
+                if key in section_map:
+                    sec, target = section_map[key]
+                    if sec not in config: config[sec] = {}
+                    config[sec][target] = value
+                else: config[key] = value
 
-            if lrs_settings:
-                print(f"Applying LRS overrides: {list(lrs_settings.keys())}", flush=True)
-                
-                # Section mapping for standard keys
-                section_map = {
-                    "unet_lr": ("optimizer_arguments", "learning_rate"),
-                    "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
-                    "min_snr_gamma": ("optimizer_arguments", "min_snr_gamma"),
-                    "noise_offset": ("training_arguments", "noise_offset"),
-                    "max_grad_norm": ("optimizer_arguments", "max_grad_norm"),
-                    "lr_scheduler": ("optimizer_arguments", "lr_scheduler"),
-                    "lr_warmup_steps": ("optimizer_arguments", "lr_warmup_steps"),
-                    "optimizer_type": ("optimizer_arguments", "optimizer_type"),
-                    "optimizer_args": ("optimizer_arguments", "optimizer_args"),
-                    "network_dim": ("additional_network_arguments", "network_dim"),
-                    "network_alpha": ("additional_network_arguments", "network_alpha"),
-                    "network_dropout": ("additional_network_arguments", "network_dropout"),
-                }
-
-                for key, value in lrs_settings.items():
-                    if value is None:
-                        continue
+        # Apply LRS Settings (Superior)
+        if lrs_settings:
+            for key, value in lrs_settings.items():
+                if key in section_map:
+                    sec, target = section_map[key]
+                    if sec not in config: config[sec] = {}
+                    config[sec][target] = value
+                else: config[key] = value
                         
                     # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
                     # This avoids creating separate parameter groups that crash Prodigy.
@@ -266,212 +418,10 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         else:
             print("Warning: Could not load LRS configuration, using default values", flush=True)
 
-        network_config_person = {
-            "stabilityai/stable-diffusion-xl-base-1.0": 235,
-            "Lykon/dreamshaper-xl-1-0": 235,
-            "Lykon/art-diffusion-xl-0.9": 235,
-            "SG161222/RealVisXL_V4.0": 467,
-            "stablediffusionapi/protovision-xl-v6.6": 235,
-            "stablediffusionapi/omnium-sdxl": 235,
-            "GraydientPlatformAPI/realism-engine2-xl": 235,
-            "GraydientPlatformAPI/albedobase2-xl": 467,
-            "KBlueLeaf/Kohaku-XL-Zeta": 235,
-            "John6666/hassaku-xl-illustrious-v10style-sdxl": 228,
-            "John6666/nova-anime-xl-pony-v5-sdxl": 235,
-            "cagliostrolab/animagine-xl-4.0": 699,
-            "dataautogpt3/CALAMITY": 235,
-            "dataautogpt3/ProteusSigma": 235,
-            "dataautogpt3/ProteusV0.5": 467,
-            "dataautogpt3/TempestV0.1": 456,
-            "ehristoforu/Visionix-alpha": 235,
-            "femboysLover/RealisticStockPhoto-fp16": 467,
-            "fluently/Fluently-XL-Final": 228,
-            "mann-e/Mann-E_Dreams": 456,
-            "misri/leosamsHelloworldXL_helloworldXL70": 235,
-            "misri/zavychromaxl_v90": 235,
-            "openart-custom/DynaVisionXL": 228,
-            "recoilme/colorfulxl": 228,
-            "zenless-lab/sdxl-aam-xl-anime-mix": 456,
-            "zenless-lab/sdxl-anima-pencil-xl-v5": 228,
-            "zenless-lab/sdxl-anything-xl": 228,
-            "zenless-lab/sdxl-blue-pencil-xl-v7": 467,
-            "Corcelio/mobius": 228,
-            "GHArt/Lah_Mysterious_SDXL_V4.0_xl_fp16": 235,
-            "OnomaAIResearch/Illustrious-xl-early-release-v0": 228,
-            "bghira/terminus-xl-velocity-v2": 235,
-            "ifmain/UltraReal_Fine-Tune": 467
-        }
-
-        network_config_style = {
-            "stabilityai/stable-diffusion-xl-base-1.0": 235,
-            "Lykon/dreamshaper-xl-1-0": 235,
-            "Lykon/art-diffusion-xl-0.9": 235,
-            "SG161222/RealVisXL_V4.0": 235,
-            "stablediffusionapi/protovision-xl-v6.6": 235,
-            "stablediffusionapi/omnium-sdxl": 235,
-            "GraydientPlatformAPI/realism-engine2-xl": 235,
-            "GraydientPlatformAPI/albedobase2-xl": 235,
-            "KBlueLeaf/Kohaku-XL-Zeta": 235,
-            "John6666/hassaku-xl-illustrious-v10style-sdxl": 235,
-            "John6666/nova-anime-xl-pony-v5-sdxl": 235,
-            "cagliostrolab/animagine-xl-4.0": 235,
-            "dataautogpt3/CALAMITY": 235,
-            "dataautogpt3/ProteusSigma": 235,
-            "dataautogpt3/ProteusV0.5": 235,
-            "dataautogpt3/TempestV0.1": 500,
-            "ehristoforu/Visionix-alpha": 235,
-            "femboysLover/RealisticStockPhoto-fp16": 235,
-            "fluently/Fluently-XL-Final": 235,
-            "mann-e/Mann-E_Dreams": 235,
-            "misri/leosamsHelloworldXL_helloworldXL70": 235,
-            "misri/zavychromaxl_v90": 235,
-            "openart-custom/DynaVisionXL": 235,
-            "recoilme/colorfulxl": 235,
-            "zenless-lab/sdxl-aam-xl-anime-mix": 235,
-            "zenless-lab/sdxl-anima-pencil-xl-v5": 235,
-            "zenless-lab/sdxl-anything-xl": 235,
-            "zenless-lab/sdxl-blue-pencil-xl-v7": 235,
-            "Corcelio/mobius": 235,
-            "GHArt/Lah_Mysterious_SDXL_V4.0_xl_fp16": 235,
-            "OnomaAIResearch/Illustrious-xl-early-release-v0": 235,
-            "bghira/terminus-xl-velocity-v2": 235,
-            "ifmain/UltraReal_Fine-Tune": 235
-        }
-
-        network_config_flux = {
-            "dataautogpt3/FLUX-MonochromeManga": 350,
-            "mikeyandfriends/PixelWave_FLUX.1-dev_03": 350,
-            "rayonlabs/FLUX.1-dev": 350,
-            "mhnakif/fluxunchained-dev": 350
-        }
-
-        network_config_qwen = {
-            "gradients-io-tournaments/Qwen-Image": 888,
-            "gradients-io-tournaments/Qwen-Image-Jib-Mix": 888
-        }
-
-        config_mapping = {
-            228: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
-            235: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
-            456: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
-            467: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
-            699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
-            900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
-            500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
-            350: {"network_dim": 32, "network_alpha": 32, "network_args": []},
-            888: {"network_dim": 128, "network_alpha": 128, "network_args": []}
-        }
-
-        config["pretrained_model_name_or_path"] = model_path
-    
-    # Determine which dictionary to use based on task type
-    if model_type == "flux":
-        target_dict = network_config_flux
-    elif model_type == "qwen-image":
-        target_dict = network_config_qwen
-    elif model_type == "z-image":
-        target_dict = {} # Z-Image logic is handled by Autoepoch/LRS mostly
-    else:
-        target_dict = network_config_style if is_style else network_config_person
-    
-    # Lookup Model Config ID (Default to 235/Rank 32 if not found)
-    config_id = target_dict.get(model_name, 235)
-    
-    # Retrieve Network Parameters from Mapping
-    model_params = config_mapping.get(config_id, config_mapping[235])
-    
-    net_dim = model_params["network_dim"]
-    net_alpha = model_params["network_alpha"]
-    net_args = model_params["network_args"]
-    
-    print(f"⚡ CHAMPION LOGIC: Model '{model_name}' mapped to ID {config_id} (Rank {net_dim})", flush=True)
-    # --------------------------------------------------
-
-    if model_type in ["sdxl", "flux"]:
-        if "additional_network_arguments" not in config:
-            config["additional_network_arguments"] = {}
-        if "dataset_arguments" not in config:
-            config["dataset_arguments"] = {}
-            
-        config["dataset_arguments"]["debug_dataset"] = False
-        config["additional_network_arguments"]["network_dim"] = net_dim
-        config["additional_network_arguments"]["network_alpha"] = net_alpha
-        config["additional_network_arguments"]["network_args"] = net_args
-
-        # LAYER 3: Autoepoch (Size-Ranges Config)
-        dataset_size = count_images_in_directory(train_data_dir)
-        if dataset_size > 0:
-            size_config = load_size_based_config(model_type, is_style, dataset_size)
-            if size_config:
-                print(f"Applying size-based config from Autoepoch for {model_type} ({dataset_size} images)", flush=True)
-                for key, value in size_config.items():
-                    config[key] = value
-
-        # Output Dir
-        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-        
-        if "training_arguments" not in config:
-             config["training_arguments"] = {}
-        config["training_arguments"]["output_dir"] = output_dir
-        
-        config["dataset_arguments"]["train_data_dir"] = train_data_dir
-        config["train_data_dir"] = train_data_dir
-        
-        if "model_arguments" not in config:
-             config["model_arguments"] = {}
-        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
-        config["pretrained_model_name_or_path"] = model_path
-        
-        config["dataset_arguments"]["enable_bucket"] = True
-        config.setdefault("enable_bucket", True)
-
-    elif is_ai_toolkit:
-        # AI-Toolkit Handle (Qwen/Z-Image)
-        for process in config['config']['process']:
-            if 'model' in process:
-                process['model']['name_or_path'] = model_path
-                output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir, exist_ok=True)
-                process['training_folder'] = output_dir
-            
-            if 'datasets' in process:
-                for dataset in process['datasets']:
-                    dataset['folder_path'] = train_data_dir
-
-            if 'adapter' in process:
-                process['adapter']['rank'] = net_dim
-                process['adapter']['alpha'] = net_alpha
-
-            if trigger_word:
-                process['trigger_word'] = trigger_word
-
-        # LAYER 3: Autoepoch for AI-Toolkit
-        dataset_size = count_images_in_directory(train_data_dir)
-        if dataset_size > 0:
-            size_config = load_size_based_config(model_type, is_style, dataset_size)
-            if size_config:
-                print(f"Applying size-based config from Autoepoch for {model_type} ({dataset_size} images)", flush=True)
-                # Map YAML keys if needed, but for now assuming direct keys work in AI-Toolkit config structure
-                # Note: This might need more specific mapping for YAML
-                for key, value in size_config.items():
-                    # For AI-Toolkit, we usually want these in the process[0] level or globally
-                    config['config']['process'][0][key] = value
-
-    dataset_size = 0
-    if os.path.exists(train_data_dir):
-        dataset_size = count_images_in_directory(train_data_dir)
-        if dataset_size > 0:
-            print(f"Counted {dataset_size} images in training directory", flush=True)
-
-
-    
-    config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
-    save_config_toml(config, config_path)
-    print(f"config is {config}", flush=True)
-    print(f"Created config at {config_path}", flush=True)
+        config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
+        save_config_toml(config, config_path)
+        print(f"Created config at {config_path}", flush=True)
+        return config_path
     return config_path
 
 

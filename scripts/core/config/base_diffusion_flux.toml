@@ -12,7 +12,7 @@ network_alpha = 32
 optimizer_type = "prodigy"
 learning_rate = 1.0
 max_grad_norm = 1.0
-optimizer_args = [ "d_coef=1.0", "weight_decay=0.01", "safeguard_warmup=True", "use_bias_correction=True" ]
+optimizer_args = [ "decouple=True", "d_coef=0.8", "weight_decay=0.01", "safeguard_warmup=True", "use_bias_correction=True" ]
 lr_scheduler = "constant"
 
 [dataset_arguments]
@@ -28,9 +28,9 @@ save_model_as = "safetensors"
 max_data_loader_n_workers = 2
 
 [inference]
-# REFERENSI MUTLAK JURI (FLUX V2 - CFG 100)
+# OPTIMIZED FOR L2 FIDELITY
 steps = 35
-guidance_scale = 10.0
+guidance_scale = 3.5
 denoise = 0.75
 resolution = "1024,1024"
 seed = 42
