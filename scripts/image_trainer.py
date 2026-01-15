@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-everything u are
+Jordansky
 """
 
 import argparse
@@ -77,52 +77,7 @@ def count_images_in_directory(directory_path: str) -> int:
     
     return count
 
-def load_size_based_config(model_type: str, is_style: bool, dataset_size: int) -> dict:
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_dir = os.path.join(script_dir, "autoepoch") # Point to autoepoch dir
-    
-    if model_type == "flux":
-        config_file = os.path.join(config_dir, "a-epochflux.json")
-    elif model_type == "qwen-image":
-        config_file = os.path.join(config_dir, "a-epochqwen.json")
-    elif model_type == "z-image":
-        config_file = os.path.join(config_dir, "a-epochz.json")
-    elif is_style:
-        config_file = os.path.join(config_dir, "a-epochstyle.json")
-    else:
-        config_file = os.path.join(config_dir, "a-epochperson.json")
-    
-    try:
-        if not os.path.exists(config_file):
-            print(f"Warning: Autoepoch config file not found: {config_file}", flush=True)
-            return None
-            
-        with open(config_file, 'r') as f:
-            size_config = json.load(f)
-        
-        size_ranges = size_config.get("size_ranges", [])
-        for size_range in size_ranges:
-            min_size = size_range.get("min", 0)
-            max_size = size_range.get("max", float('inf'))
-            
-            if min_size <= dataset_size <= max_size:
-                print(f"Using size-based config for {dataset_size} images (range: {min_size}-{max_size})", flush=True)
-                return size_range.get("config", {})
-        
-        default_config = size_config.get("default", {})
-        if default_config:
-            print(f"Using default size-based config for {dataset_size} images", flush=True)
-        return default_config
-        
-    except Exception as e:
-        print(f"Warning: Could not load autoepoch config from {config_file}: {e}", flush=True)
-        return None
-
 def get_dataset_size_category(dataset_size: int) -> str:
-    """
-    Map dataset size to category matching Autoepoch ranges.
-    Returns: 'small', 'medium', or 'large'
-    """
     if dataset_size <= 15:
         return "small"
     elif dataset_size <= 35:
@@ -131,17 +86,6 @@ def get_dataset_size_category(dataset_size: int) -> str:
         return "large"
 
 def get_config_for_model(lrs_config: dict, model_name: str, dataset_size: int = None) -> dict:
-    """
-    Get LRS config for a specific model, with optional dataset size tuning.
-    
-    Args:
-        lrs_config: The loaded LRS JSON config
-        model_name: Model hash or identifier
-        dataset_size: Number of images in dataset (optional)
-    
-    Returns:
-        Merged config dict with size-specific overrides applied
-    """
     if not isinstance(lrs_config, dict):
         return None
 
@@ -192,12 +136,9 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         print(f"Warning: Could not load LRS config from {config_file}: {e}", flush=True)
         return None
 
-
 def create_config(task_id, model_path, model_name, model_type, expected_repo_name, trigger_word: str | None = None):
-    """Get the training data directory"""
     train_data_dir = train_paths.get_image_training_images_dir(task_id)
 
-    """Create the diffusion config file"""
     config_template_path, is_style = train_paths.get_image_training_config_template_path(model_type, train_data_dir)
 
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
@@ -230,7 +171,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         with open(config_template_path, "r") as file:
             config = toml.load(file)
 
-        # Inject model path (safetensors)
+        # Inject (safetensors)
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
 
         lrs_config = load_lrs_config(model_type, is_style)
@@ -336,7 +277,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             "dataautogpt3/CALAMITY": 235,
             "dataautogpt3/ProteusSigma": 235,
             "dataautogpt3/ProteusV0.5": 235,
-            "dataautogpt3/TempestV0.1": 228,
+            "dataautogpt3/TempestV0.1": 500,
             "ehristoforu/Visionix-alpha": 235,
             "femboysLover/RealisticStockPhoto-fp16": 235,
             "fluently/Fluently-XL-Final": 235,
@@ -358,57 +299,31 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config_mapping = {
             228: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
-            235: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon", "dropout=null"]},
+            235: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
             456: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
-            467: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon", "dropout=null"]},
-            699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon", "dropout=null"]},
-            900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon", "dropout=null"]}
+            467: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
+            699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
+            900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
+            500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]}
         }
 
         config["pretrained_model_name_or_path"] = model_path
-        # CHAMPION LOGIC: Dynamic Rank & ConvLoRA Mapping
-    # Maps model hash/name to optimal LoRA settings
-    # 235 (Standard): Dim 32, Conv 4
-    # 467 (High Detail): Dim 64, Conv 4
-    # 699 (Anime/Complex): Dim 96, Conv 4
     
-    # Default Fallback
-    net_dim = 32
-    net_alpha = 32
-    net_args = ["conv_dim=4", "conv_alpha=4", "dropout=0"] # Enable ConvLoRA by default for stability
-
-    # Known high-capacity models requiring Rank 64
-    rank_64_models = [
-        "SG161222/RealVisXL_V4.0",
-        "GraydientPlatformAPI/albedobase2-xl",
-        "dataautogpt3/ProteusV0.5",
-        "femboysLover/RealisticStockPhoto-fp16",
-        "zenless-lab/sdxl-blue-pencil-xl-v7"
-    ]
-
-    # Known complex models requiring Rank 96
-    rank_96_models = [
-        "cagliostrolab/animagine-xl-4.0"
-    ]
+    # Determine which dictionary to use based on task type
+    target_dict = network_config_style if is_style else network_config_person
     
-    # Known lightweight models (Rank 32 is fine) but we keep lists for clarity
-    # "misri/leosamsHelloworldXL_helloworldXL70" -> 32
-    # "dataautogpt3/TempestV0.1" -> 64 (Champion uses 456 mapping which is Rank 64!)
+    # Lookup Model Config ID (Default to 235/Rank 32 if not found)
+    config_id = target_dict.get(model_name, 235)
     
-    # Special Override for Tempest (Style Champion uses Rank 64 for it)
-    if "Tempest" in model_name:
-         rank_64_models.append(model_name)
-
-    if any(m in model_name for m in rank_96_models):
-        net_dim = 96
-        net_alpha = 96
-        print(f"⚡ CHAMPION LOGIC: Applying HIGH CAPACITY (Rank 96) for {model_name}", flush=True)
-    elif any(m in model_name for m in rank_64_models):
-        net_dim = 64
-        net_alpha = 64
-        print(f"⚡ CHAMPION LOGIC: Applying MEDIUM CAPACITY (Rank 64) for {model_name}", flush=True)
-    else:
-        print(f"⚡ CHAMPION LOGIC: Applying STANDARD CAPACITY (Rank 32) for {model_name}", flush=True)
+    # Retrieve Network Parameters from Mapping
+    model_params = config_mapping.get(config_id, config_mapping[235])
+    
+    net_dim = model_params["network_dim"]
+    net_alpha = model_params["network_alpha"]
+    net_args = model_params["network_args"]
+    
+    print(f"⚡ CHAMPION LOGIC: Model '{model_name}' mapped to ID {config_id} (Rank {net_dim})", flush=True)
+    # --------------------------------------------------
 
     if model_type == "sdxl":
         if is_style:
@@ -469,12 +384,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         if dataset_size > 0:
             print(f"Counted {dataset_size} images in training directory", flush=True)
 
-    if dataset_size > 0:
-        size_config = load_size_based_config(model_type, is_style, dataset_size)
-        if size_config:
-            print(f"Applying size-based config for {dataset_size} images", flush=True)
-            for key, value in size_config.items():
-                config[key] = value
+
     
     config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
     save_config_toml(config, config_path)

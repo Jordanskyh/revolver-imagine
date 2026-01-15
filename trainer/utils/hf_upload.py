@@ -115,14 +115,23 @@ def main():
     api = HfApi()
     api.create_repo(repo_id=repo_id, token=hf_token, exist_ok=True, private=False)
 
-    print(f"Uploading contents of {local_folder} to {repo_id}", flush=True)
-    if repo_subfolder:
-        print(f"Uploading into subfolder: {repo_subfolder}", flush=True)
+    # FLATTEN: Ensure safetensors is in root of local_folder
+    for root, dirs, files in os.walk(local_folder):
+        for file in files:
+            if file.endswith(".safetensors"):
+                src_path = os.path.join(root, file)
+                dst_path = os.path.join(local_folder, file)
+                if src_path != dst_path:
+                    shutil.move(src_path, dst_path)
+                    print(f"Moved {file} to root of upload folder", flush=True)
 
+    print(f"Uploading contents of {local_folder} to {repo_id} (ROOT)", flush=True)
+
+    # Force upload to ROOT (ignore subfolder env var)
     api.upload_folder(
         repo_id=repo_id,
         folder_path=local_folder,
-        path_in_repo=repo_subfolder if repo_subfolder else None,
+        path_in_repo=None, 
         commit_message=f"Upload task output {task_id}",
         token=hf_token,
     )
