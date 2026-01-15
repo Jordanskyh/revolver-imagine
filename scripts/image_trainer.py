@@ -77,6 +77,47 @@ def count_images_in_directory(directory_path: str) -> int:
     
     return count
 
+def load_size_based_config(model_type: str, is_style: bool, dataset_size: int) -> dict:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_dir = os.path.join(script_dir, "autoepoch") # Point to autoepoch dir
+    
+    if model_type == "flux":
+        config_file = os.path.join(config_dir, "a-epochflux.json")
+    elif model_type == "qwen-image":
+        config_file = os.path.join(config_dir, "a-epochqwen.json")
+    elif model_type == "z-image":
+        config_file = os.path.join(config_dir, "a-epochz.json")
+    elif is_style:
+        config_file = os.path.join(config_dir, "a-epochstyle.json")
+    else:
+        config_file = os.path.join(config_dir, "a-epochperson.json")
+    
+    try:
+        if not os.path.exists(config_file):
+            print(f"Warning: Autoepoch config file not found: {config_file}", flush=True)
+            return None
+            
+        with open(config_file, 'r') as f:
+            size_config = json.load(f)
+        
+        size_ranges = size_config.get("size_ranges", [])
+        for size_range in size_ranges:
+            min_size = size_range.get("min", 0)
+            max_size = size_range.get("max", float('inf'))
+            
+            if min_size <= dataset_size <= max_size:
+                print(f"Using size-based config for {dataset_size} images (range: {min_size}-{max_size})", flush=True)
+                return size_range.get("config", {})
+        
+        default_config = size_config.get("default", {})
+        if default_config:
+            print(f"Using default size-based config for {dataset_size} images", flush=True)
+        return default_config
+        
+    except Exception as e:
+        print(f"Warning: Could not load autoepoch config from {config_file}: {e}", flush=True)
+        return None
+
 def get_dataset_size_category(dataset_size: int) -> str:
     if dataset_size <= 15:
         return "small"
@@ -297,6 +338,18 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             "ifmain/UltraReal_Fine-Tune": 235
         }
 
+        network_config_flux = {
+            "dataautogpt3/FLUX-MonochromeManga": 350,
+            "mikeyandfriends/PixelWave_FLUX.1-dev_03": 350,
+            "rayonlabs/FLUX.1-dev": 350,
+            "mhnakif/fluxunchained-dev": 350
+        }
+
+        network_config_qwen = {
+            "gradients-io-tournaments/Qwen-Image": 888,
+            "gradients-io-tournaments/Qwen-Image-Jib-Mix": 888
+        }
+
         config_mapping = {
             228: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
             235: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=8", "conv_alpha=8", "algo=locon"]},
@@ -304,13 +357,22 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             467: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=16", "conv_alpha=16", "algo=locon"]},
             699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
             900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
-            500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]}
+            500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
+            350: {"network_dim": 32, "network_alpha": 32, "network_args": []},
+            888: {"network_dim": 128, "network_alpha": 128, "network_args": []}
         }
 
         config["pretrained_model_name_or_path"] = model_path
     
     # Determine which dictionary to use based on task type
-    target_dict = network_config_style if is_style else network_config_person
+    if model_type == "flux":
+        target_dict = network_config_flux
+    elif model_type == "qwen-image":
+        target_dict = network_config_qwen
+    elif model_type == "z-image":
+        target_dict = {} # Z-Image logic is handled by Autoepoch/LRS mostly
+    else:
+        target_dict = network_config_style if is_style else network_config_person
     
     # Lookup Model Config ID (Default to 235/Rank 32 if not found)
     config_id = target_dict.get(model_name, 235)
@@ -325,12 +387,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     print(f"⚡ CHAMPION LOGIC: Model '{model_name}' mapped to ID {config_id} (Rank {net_dim})", flush=True)
     # --------------------------------------------------
 
-    if model_type == "sdxl":
-        if is_style:
-            # Style specific overrides if needed (Champion uses same logic mostly)
-            pass
-        
-        # Apply logic to config
+    if model_type in ["sdxl", "flux"]:
         if "additional_network_arguments" not in config:
             config["additional_network_arguments"] = {}
         if "dataset_arguments" not in config:
@@ -340,43 +397,68 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         config["additional_network_arguments"]["network_dim"] = net_dim
         config["additional_network_arguments"]["network_alpha"] = net_alpha
         config["additional_network_arguments"]["network_args"] = net_args
-        
-        # Calculate Output Dir
+
+        # LAYER 3: Autoepoch (Size-Ranges Config)
+        dataset_size = count_images_in_directory(train_data_dir)
+        if dataset_size > 0:
+            size_config = load_size_based_config(model_type, is_style, dataset_size)
+            if size_config:
+                print(f"Applying size-based config from Autoepoch for {model_type} ({dataset_size} images)", flush=True)
+                for key, value in size_config.items():
+                    config[key] = value
+
+        # Output Dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
+        
+        if "training_arguments" not in config:
+             config["training_arguments"] = {}
         config["training_arguments"]["output_dir"] = output_dir
         
-        # Dual Injection for maximum compatibility
         config["dataset_arguments"]["train_data_dir"] = train_data_dir
         config["train_data_dir"] = train_data_dir
         
+        if "model_arguments" not in config:
+             config["model_arguments"] = {}
         config["model_arguments"]["pretrained_model_name_or_path"] = model_path
         config["pretrained_model_name_or_path"] = model_path
         
         config["dataset_arguments"]["enable_bucket"] = True
-        config["enable_bucket"] = True
+        config.setdefault("enable_bucket", True)
 
+    elif is_ai_toolkit:
+        # AI-Toolkit Handle (Qwen/Z-Image)
+        for process in config['config']['process']:
+            if 'model' in process:
+                process['model']['name_or_path'] = model_path
+                output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir, exist_ok=True)
+                process['training_folder'] = output_dir
+            
+            if 'datasets' in process:
+                for dataset in process['datasets']:
+                    dataset['folder_path'] = train_data_dir
 
-    elif model_type == "flux":
-        config["loss_type"] = "huber"
-        config["huber_c"] = 0.1
-        config["caption_dropout_probability"] = 0.05
-        config["optimizer_type"] = "prodigy"
-        config["learning_rate"] = 1.0
-        config["mixed_precision"] = "bf16"
-        
-        # Calculate Output Dir for Flux
-        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-        config["training_arguments"]["output_dir"] = output_dir
-        
-        config["dataset_arguments"]["train_data_dir"] = train_data_dir
-        config["train_data_dir"] = train_data_dir
-        
-        config["model_arguments"]["pretrained_model_name_or_path"] = model_path
-        config["pretrained_model_name_or_path"] = model_path
+            if 'adapter' in process:
+                process['adapter']['rank'] = net_dim
+                process['adapter']['alpha'] = net_alpha
+
+            if trigger_word:
+                process['trigger_word'] = trigger_word
+
+        # LAYER 3: Autoepoch for AI-Toolkit
+        dataset_size = count_images_in_directory(train_data_dir)
+        if dataset_size > 0:
+            size_config = load_size_based_config(model_type, is_style, dataset_size)
+            if size_config:
+                print(f"Applying size-based config from Autoepoch for {model_type} ({dataset_size} images)", flush=True)
+                # Map YAML keys if needed, but for now assuming direct keys work in AI-Toolkit config structure
+                # Note: This might need more specific mapping for YAML
+                for key, value in size_config.items():
+                    # For AI-Toolkit, we usually want these in the process[0] level or globally
+                    config['config']['process'][0][key] = value
 
     dataset_size = 0
     if os.path.exists(train_data_dir):
