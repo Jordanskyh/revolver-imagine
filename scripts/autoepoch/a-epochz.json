@@ -17,18 +17,18 @@
     "size_ranges": [
         {
             "min": 1,
-            "max": 15,
+            "max": 20,
             "config": {
-                "max_train_epochs": 300,
-                "save_every_n_epochs": 50
+                "steps": 1100,
+                "save_every": 275
             }
         },
         {
-            "min": 16,
+            "min": 21,
             "max": 40,
             "config": {
-                "max_train_epochs": 200,
-                "save_every_n_epochs": 40
+                "steps": 1200,
+                "save_every": 300
             }
         },
         {

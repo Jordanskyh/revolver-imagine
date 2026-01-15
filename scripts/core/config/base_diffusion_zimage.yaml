@@ -13,16 +13,20 @@ config:
       is_reg: false
     train:
       batch_size: 1
-      steps: 2000
-      lr: 0.0001
-      optimizer: adamw8bit
+      steps: 1300
+      lr: 1.0
+      optimizer: prodigy
       gradient_checkpointing: true
       noise_scheduler: flowmatch
       timestep_type: weighted
       dtype: bf16
+      caption_dropout_rate: 0.50
+      optimizer_params:
+        d_coef: 0.8
+        weight_decay: 0.01
       ema_config:
         use_ema: true
-        ema_decay: 0.995 # OPTIMIZED: Higher stability for Turbo convergence
+        ema_decay: 0.99
     model:
       name_or_path: /cache/models
       arch: zimage:turbo

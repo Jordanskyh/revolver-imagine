@@ -271,7 +271,7 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
         500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
         350: {"network_dim": 32, "network_alpha": 32, "network_args": []},
-        888: {"network_dim": 128, "network_alpha": 128, "network_args": []},
+        888: {"network_dim": 96, "network_alpha": 96, "network_args": []},
         999: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=32", "conv_alpha=32"]}
     }
 

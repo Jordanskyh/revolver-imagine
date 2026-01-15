@@ -1,9 +1,8 @@
 ﻿{
     "default": {
-        "min_snr_gamma": null,
-        "noise_offset": null,
-        "text_encoder_lr": null,
-        "unet_lr": null
+        "steps": 1350,
+        "lr": 0.00005,
+        "optimizer": "adamw8bit"
     },
     "data": {
         "65f7526e4b4dfff9cfd1a961f40e75649d34f085c246d35d0e025bb235bc635d": {

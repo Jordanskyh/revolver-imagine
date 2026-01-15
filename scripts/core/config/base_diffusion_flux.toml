@@ -1,6 +1,8 @@
 [model_arguments]
 pretrained_model_name_or_path = "/cache/models"
 v_parameterization = false
+max_shift = 1.15
+base_shift = 0.5
 
 [additional_network_arguments]
 no_half_vae = true
@@ -18,6 +20,10 @@ lr_scheduler = "constant"
 [dataset_arguments]
 cache_latents = true
 debug_dataset = false
+resolution = 1024
+enable_bucket = false
+caption_dropout_rate = 0.18
+caption_dropout_every_n_epochs = 0
 
 [training_arguments]
 mixed_precision = "bf16"
@@ -26,6 +32,10 @@ output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
+loss_type = "huber"
+huber_c = 0.1
+huber_schedule = "snr"
+min_snr_gamma = 5
 
 [inference]
 # OPTIMIZED FOR L2 FIDELITY
