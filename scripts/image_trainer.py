@@ -396,21 +396,16 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
             "optimizer_args": ("optimizer_arguments", "optimizer_args"),
         }
 
-        # Apply Size Config First
-        if size_config:
-            for key, value in size_config.items():
-                if key in section_map:
-                    sec, target = section_map[key]
-                    if sec not in config: config[sec] = {}
-                    config[sec][target] = value
-                else: config[key] = value
-
-        # Apply LRS Settings (Superior)
-        if lrs_settings:
-            for key, value in lrs_settings.items():
+        # Apply Overrides (Priority: Autoepoch < LRS)
+        configs_to_apply = [size_config, lrs_settings]
+        
+        for cfg in configs_to_apply:
+            if not cfg:
+                continue
+                
+            for key, value in cfg.items():
                 # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
-                # This avoids creating separate parameter groups that crash Prodigy.
-                if key == "text_encoder_lr" and str(lrs_settings.get("unet_lr")) == str(value):
+                if key == "text_encoder_lr" and str(cfg.get("unet_lr")) == str(value):
                     continue
 
                 if key in section_map:
@@ -419,10 +414,8 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
                         config[sec] = {}
                     config[sec][target] = value
                 else:
-                    # Direct injection for root keys (max_train_epochs, etc.)
+                    # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
                     config[key] = value
-        else:
-            print("Warning: Could not load LRS configuration, using default values", flush=True)
 
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
         save_config_toml(config, config_path)
