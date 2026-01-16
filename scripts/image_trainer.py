@@ -356,6 +356,20 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
                 elif key in ["max_train_epochs", "steps"]: 
                     calculated_val = calculate_steps(value) if key == "max_train_epochs" else value
                     process['train']['steps'] = calculated_val
+                elif key == "optimizer_args" and isinstance(value, list):
+                    # CONVERSION FIX: List["k=v"] -> Dict{"k": v} for AI-Toolkit
+                    opt_params = {}
+                    for item in value:
+                        if "=" in item:
+                            k, v = item.split("=", 1)
+                            # Simple type inference
+                            if v.lower() == "true": v = True
+                            elif v.lower() == "false": v = False
+                            else:
+                                try: v = float(v) if "." in v else int(v)
+                                except ValueError: pass
+                            opt_params[k.strip()] = v
+                    process['train']['optimizer_params'] = opt_params
                 else: 
                     process['train'][key] = value
 
