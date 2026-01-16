@@ -408,27 +408,19 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         # Apply LRS Settings (Superior)
         if lrs_settings:
             for key, value in lrs_settings.items():
+                # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
+                # This avoids creating separate parameter groups that crash Prodigy.
+                if key == "text_encoder_lr" and str(lrs_settings.get("unet_lr")) == str(value):
+                    continue
+
                 if key in section_map:
                     sec, target = section_map[key]
-                    if sec not in config: config[sec] = {}
+                    if sec not in config:
+                        config[sec] = {}
                     config[sec][target] = value
-                else: config[key] = value
-                        
-                    # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
-                    # This avoids creating separate parameter groups that crash Prodigy.
-                    if key == "text_encoder_lr" and str(lrs_settings.get("unet_lr")) == str(value):
-                         continue
-
-                    if key in section_map:
-                        section, target_key = section_map[key]
-                        if section not in config:
-                            config[section] = {}
-                        config[section][target_key] = value
-                    else:
-                        # Direct injection for root keys (max_train_epochs, etc.)
-                        config[key] = value
-            else:
-                print(f"Warning: No LRS configuration found for model '{model_name}'", flush=True)
+                else:
+                    # Direct injection for root keys (max_train_epochs, etc.)
+                    config[key] = value
         else:
             print("Warning: Could not load LRS configuration, using default values", flush=True)
 
