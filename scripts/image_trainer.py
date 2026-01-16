@@ -194,7 +194,7 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         "dataautogpt3/CALAMITY": 235,
         "dataautogpt3/ProteusSigma": 235,
         "dataautogpt3/ProteusV0.5": 467,
-        "dataautogpt3/TempestV0.1": 456,
+        "dataautogpt3/TempestV0.1": 500,
         "ehristoforu/Visionix-alpha": 235,
         "femboysLover/RealisticStockPhoto-fp16": 467,
         "fluently/Fluently-XL-Final": 228,

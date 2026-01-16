@@ -27,9 +27,11 @@ output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
-gradient_accumulation_steps = 4
-noise_offset_type = "Original"
-noise_offset = 0.0357
+gradient_accumulation_steps = 1
+train_batch_size = 4
+loss_type = "l2"
+# noise_offset_type = "Original" 
+# noise_offset = 0.0357
 
 [inference]
 # REFERENSI MUTLAK JURI (SDXL PERSON)
