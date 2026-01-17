@@ -1,4 +1,4 @@
-## STABLE CONFIG - Based on image-yaya (PROVEN TO WORK)
+## STABLE CONFIG - Basedd on image-yaya (PROVEN TO WORK)
 
 no_metadata = true
 ae = "/app/flux/ae.safetensors"
