@@ -391,118 +391,119 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         save_config(config, config_path)
         return config_path
     else:
-        with open(config_template_path, "r") as file:
-            config = toml.load(file)
+        try:
+            with open(config_template_path, "r") as file:
+                config = toml.load(file)
 
-        config['model_arguments']['pretrained_model_name_or_path'] = model_path
-        
-        # FLUX Component Auto-Pathing (V2.5-GOLDEN - VALIDATOR STANDARD)
-        if "flux" in model_type:
-            print("\n[FLUX V2.5-GOLDEN] Surgical Asset Fingerprinting...", flush=True)
+            config['model_arguments']['pretrained_model_name_or_path'] = model_path
             
-            # 1. Hard-check Validator Standard Paths (Top Priority)
-            std_mapping = {
-                'ae': "/cache/models/ae.safetensors",
-                'clip_l': "/cache/models/clip_l.safetensors",
-                't5xxl': "/cache/models/t5xxl.safetensors"
-            }
-            for key, path in std_mapping.items():
-                if os.path.exists(path):
-                    if key not in config['model_arguments']: config['model_arguments'][key] = {}
-                    config['model_arguments'][key] = path
-                    print(f"   [VALIDATOR] Standard path found: {key} -> {path}", flush=True)
-
-            # 2. Surgical Discovery (Secondary if standard paths missing)
-            search_bases = ["/cache/models", "/app/models", "/workspace/models", os.path.dirname(model_path)]
-            files_found = []
-            for b_dir in search_bases:
-                if not os.path.exists(b_dir): continue
-                for root, _, files in os.walk(b_dir):
-                    for f in files:
-                        if f.endswith(".safetensors"):
-                            p = os.path.join(root, f)
-                            sz = os.path.getsize(p) / (1024**3)
-                            files_found.append({"path": p, "size": sz, "root": root})
-
-            def find_surgical(name, golden_min, golden_max, avoid=["part", "of-", "shard"]):
-                # Skip if already found via standard path
-                if config['model_arguments'].get(name.lower().replace('-l', '_l')): return config['model_arguments'][name.lower().replace('-l', '_l')]
-                matches = []
-                for entry in files_found:
-                    p, sz, root = entry["path"], entry["size"], entry["root"]
-                    if golden_min <= sz <= golden_max:
-                        if avoid and any(a in p.lower() for a in avoid): continue
-                        score = 0
-                        if "flux" in p.lower() or "flux" in root.lower(): score += 100
-                        if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
-                        matches.append((score, sz, p))
-                if matches:
-                    matches.sort(key=lambda x: (-x[0], -x[1]))
-                    return matches[0][2]
-                return None
-
-            if not config['model_arguments'].get('ae'):
-                config['model_arguments']['ae'] = find_surgical("AE", 0.3, 0.45)
-            if not config['model_arguments'].get('clip_l'):
-                config['model_arguments']['clip_l'] = find_surgical("CLIP", 0.2, 0.45)
-            if not config['model_arguments'].get('t5xxl'):
-                config['model_arguments']['t5xxl'] = find_surgical("T5", 4.3, 11.0)
-
-            if not (config['model_arguments'].get('ae') and config['model_arguments'].get('clip_l') and config['model_arguments'].get('t5xxl')):
-                print("\n[COHERENCE FAILURE] Missing vital FLUX components!", flush=True)
-                for e in sorted(files_found, key=lambda x: x['size'], reverse=True):
-                    print(f"   - {e['size']:.3f} GB | {e['path']}", flush=True)
-                raise RuntimeError("Architectural Mismatch: Could not find unified FLUX components.")
-
-            print(f"✅ [ASSET CHECK] AE: {config['model_arguments'].get('ae')}, CLIP: {config['model_arguments'].get('clip_l')}, T5: {config['model_arguments'].get('t5xxl')}", flush=True)
-
-        config['train_data_dir'] = train_data_dir
-        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
-        if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
-        config['output_dir'] = output_dir
-
-        # Apply Overrides to TOML
-        section_map = {
-            "unet_lr": ("optimizer_arguments", "learning_rate"),
-            "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
-            "min_snr_gamma": ("optimizer_arguments", "min_snr_gamma"),
-            "noise_offset": ("training_arguments", "noise_offset"),
-            "optimizer_type": ("optimizer_arguments", "optimizer_type"),
-            "optimizer_args": ("optimizer_arguments", "optimizer_args"),
-        }
-
-        # Apply Overrides (Priority: Autoepoch < LRS)
-        configs_to_apply = [size_config, lrs_settings]
-        
-        for cfg in configs_to_apply:
-            if not cfg:
-                continue
+            # FLUX Component Auto-Pathing (V2.6-FINAL - REDEMPTION)
+            if "flux" in model_type:
+                print("\n[FLUX V2.6-FINAL] Surgical Asset Fingerprinting...", flush=True)
                 
-            for key, value in cfg.items():
-                # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
-                if key == "text_encoder_lr" and str(cfg.get("unet_lr")) == str(value):
+                # 1. Hard-check Validator Standard Paths (Top Priority)
+                std_mapping = {
+                    'ae': "/cache/models/ae.safetensors",
+                    'clip_l': "/cache/models/clip_l.safetensors",
+                    't5xxl': "/cache/models/t5xxl.safetensors"
+                }
+                for key, path in std_mapping.items():
+                    if os.path.exists(path):
+                        if key not in config['model_arguments']: config['model_arguments'][key] = {}
+                        config['model_arguments'][key] = path
+                        print(f"   [VALIDATOR] Standard path found: {key} -> {path}", flush=True)
+
+                # 2. Surgical Discovery (Secondary if standard paths missing)
+                search_bases = ["/cache/models", "/app/models", "/workspace/models", os.path.dirname(model_path)]
+                files_found = []
+                for b_dir in search_bases:
+                    if not os.path.exists(b_dir): continue
+                    for root, _, files in os.walk(b_dir):
+                        for f in files:
+                            if f.endswith(".safetensors"):
+                                p = os.path.join(root, f)
+                                sz = os.path.getsize(p) / (1024**3)
+                                files_found.append({"path": p, "size": sz, "root": root})
+
+                def find_surgical(name, golden_min, golden_max, avoid=["part", "of-", "shard"]):
+                    # Skip if already found via standard path
+                    if config['model_arguments'].get(name.lower().replace('-l', '_l')): return config['model_arguments'][name.lower().replace('-l', '_l')]
+                    matches = []
+                    for entry in files_found:
+                        p, sz, root = entry["path"], entry["size"], entry["root"]
+                        if golden_min <= sz <= golden_max:
+                            if avoid and any(a in p.lower() for a in avoid): continue
+                            score = 0
+                            if "flux" in p.lower() or "flux" in root.lower(): score += 100
+                            if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
+                            matches.append((score, sz, p))
+                    if matches:
+                        matches.sort(key=lambda x: (-x[0], -x[1]))
+                        return matches[0][2]
+                    return None
+
+                if not config['model_arguments'].get('ae'):
+                    config['model_arguments']['ae'] = find_surgical("AE", 0.3, 0.45)
+                if not config['model_arguments'].get('clip_l'):
+                    config['model_arguments']['clip_l'] = find_surgical("CLIP", 0.2, 0.45)
+                if not config['model_arguments'].get('t5xxl'):
+                    config['model_arguments']['t5xxl'] = find_surgical("T5", 4.3, 11.0)
+
+                if not (config['model_arguments'].get('ae') and config['model_arguments'].get('clip_l') and config['model_arguments'].get('t5xxl')):
+                    print("\n[COHERENCE FAILURE] Missing vital FLUX components!", flush=True)
+                    for e in sorted(files_found, key=lambda x: x['size'], reverse=True):
+                        print(f"   - {e['size']:.3f} GB | {e['path']}", flush=True)
+                    raise RuntimeError("Architectural Mismatch: Could not find unified FLUX components.")
+
+                print(f"✅ [ASSET CHECK] AE: {config['model_arguments'].get('ae')}, CLIP: {config['model_arguments'].get('clip_l')}, T5: {config['model_arguments'].get('t5xxl')}", flush=True)
+
+            config['train_data_dir'] = train_data_dir
+            output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
+            if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
+            config['output_dir'] = output_dir
+
+            # Apply Overrides to TOML
+            section_map = {
+                "unet_lr": ("optimizer_arguments", "learning_rate"),
+                "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
+                "min_snr_gamma": ("optimizer_arguments", "min_snr_gamma"),
+                "noise_offset": ("training_arguments", "noise_offset"),
+                "optimizer_type": ("optimizer_arguments", "optimizer_type"),
+                "optimizer_args": ("optimizer_arguments", "optimizer_args"),
+            }
+
+            # Apply Overrides (Priority: Autoepoch < LRS)
+            configs_to_apply = [size_config, lrs_settings]
+            
+            for cfg in configs_to_apply:
+                if not cfg:
                     continue
+                    
+                for key, value in cfg.items():
+                    # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
+                    if key == "text_encoder_lr" and str(cfg.get("unet_lr")) == str(value):
+                        continue
 
-                if key in section_map:
-                    sec, target = section_map[key]
-                    if sec not in config:
-                        config[sec] = {}
-                    config[sec][target] = value
-                else:
-                    # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
-                    config[key] = value
+                    if key in section_map:
+                        sec, target = section_map[key]
+                        if sec not in config:
+                            config[sec] = {}
+                        config[sec][target] = value
+                    else:
+                        # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
+                        config[key] = value
 
-        config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
-        
-        print(f"\n📝 [TOML PREVIEW] Paths for FLUX core components:")
-        print(f"   - pretrained_model: {config['model_arguments'].get('pretrained_model_name_or_path')}")
-        print(f"   - ae: {config['model_arguments'].get('ae')}")
-        print(f"   - clip_l: {config['model_arguments'].get('clip_l')}")
-        print(f"   - t5xxl: {config['model_arguments'].get('t5xxl')}\n")
+            config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
+            
+            print(f"\n[TOML PREVIEW] Paths for FLUX core components:")
+            print(f"   - pretrained_model: {config['model_arguments'].get('pretrained_model_name_or_path')}")
+            print(f"   - ae: {config['model_arguments'].get('ae')}")
+            print(f"   - clip_l: {config['model_arguments'].get('clip_l')}")
+            print(f"   - t5xxl: {config['model_arguments'].get('t5xxl')}\n")
 
-        save_config_toml(config, config_path)
-        print(f"Created config at {config_path}", flush=True)
-        return config_path
+            save_config_toml(config, config_path)
+            print(f"Created config at {config_path}", flush=True)
+            return config_path
     except Exception as e:
         print(f"Error during create_config: {e}")
         return None
