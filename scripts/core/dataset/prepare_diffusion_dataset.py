@@ -34,7 +34,7 @@ def prepare_dataset(
 
     training_dir = os.path.join(
         output_dir,
-        f"img/{training_images_repeat}_{instance_prompt} {class_prompt}",
+        f"{training_images_repeat}_{instance_prompt} {class_prompt}",
     )
 
     if os.path.exists(training_dir):
@@ -45,7 +45,7 @@ def prepare_dataset(
     if regularization_images_dir is not None:
         regularization_dir = os.path.join(
             output_dir,
-            f"reg/{regularization_images_repeat}_{class_prompt}",
+            f"{regularization_images_repeat}_{class_prompt}",
         )
 
         if os.path.exists(regularization_dir):
