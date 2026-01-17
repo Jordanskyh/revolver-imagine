@@ -486,10 +486,12 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             "optimizer_args": ("optimizer_arguments", "optimizer_args"),
         }
         
-        # FLUX Specific Direct Overrides (G.O.D Style)
+        # FLUX Specific Direct Overrides (G.O.D Style - All Flat)
         if model_type == "flux":
-            section_map["unet_lr"] = (None, "unet_lr") # Direct top-level
-            section_map["text_encoder_lr"] = (None, "text_encoder_lr") # Direct top-level
+            section_map["unet_lr"] = (None, "unet_lr")
+            section_map["text_encoder_lr"] = (None, "text_encoder_lr")
+            section_map["optimizer_type"] = (None, "optimizer_type")
+            section_map["optimizer_args"] = (None, "optimizer_args")
 
         # Apply Overrides (Priority: Autoepoch < LRS)
         configs_to_apply = [size_config, lrs_settings]
