@@ -51,6 +51,8 @@ class MinerSubmission(BaseModel):
     repo: str
     model_hash: str | None = None
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class MinerTaskResult(BaseModel):
     hotkey: str
@@ -64,6 +66,8 @@ class MinerTaskResult(BaseModel):
 class TaskMinerResult(BaseModel):
     task_id: UUID
     quality_score: float
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class InstructTextDatasetType(BaseModel):

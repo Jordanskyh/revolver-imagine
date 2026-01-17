@@ -340,8 +340,14 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             process['adapter']['rank'] = net_dim
             process['adapter']['alpha'] = net_alpha
         
+        if 'network' in process:
+            process['network']['linear'] = net_dim
+            process['network']['linear_alpha'] = net_alpha
+
         # Apply Overrides to YAML
         if 'train' not in process: process['train'] = {}
+        # Ensure model_name points to local path to prevent HF lookup failures
+        process['train']['model_name'] = model_path
         
         # Helper to calculate steps based on epochs for AI-Toolkit
         def calculate_steps(epochs):

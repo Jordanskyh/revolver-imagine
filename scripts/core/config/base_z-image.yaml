@@ -5,25 +5,32 @@ config:
   - type: diffusion_trainer
     training_folder: /app/checkpoints
     device: cuda
+    network:
+      type: lora
+      linear: 32
+      linear_alpha: 32
+      conv: 16
+      conv_alpha: 16
+    save:
+      dtype: bf16
+      save_every: 250
+      max_step_saves_to_keep: 4
+      save_format: diffusers
     datasets:
     - folder_path: /dataset/images
       caption_ext: txt
       cache_latents_to_disk: true
-      resolution: [1024]
+      resolution: [512, 768, 1024]
       is_reg: false
     train:
       batch_size: 1
-      steps: 1300
-      lr: 1.0
-      optimizer: prodigy
+      steps: 2000
+      lr: 0.0001
+      optimizer: adamw8bit
       gradient_checkpointing: true
       noise_scheduler: flowmatch
       timestep_type: weighted
       dtype: bf16
-      caption_dropout_rate: 0.50
-      optimizer_params:
-        d_coef: 0.8
-        weight_decay: 0.01
       ema_config:
         use_ema: true
         ema_decay: 0.99
@@ -39,8 +46,6 @@ config:
       type: lora
       rank: 32
       alpha: 32
-      conv_dim: 32 # OPTIMIZED: Better spatial detail for L2
-      conv_alpha: 32
 meta:
-  name: zimage_lora_dethrone
-  version: '2.0'
+  name: zimage_lora_yaya_scheme
+  version: '2.1'
