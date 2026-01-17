@@ -181,7 +181,13 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     is_style = "style" in model_name.lower() or "style" in task_id.lower()
     train_data_dir = os.path.join(train_cst.IMAGE_CONTAINER_IMAGES_PATH, task_id)
     
+    # Try specific template (e.g., base_diffusion_flux_person.toml)
     config_template_path = os.path.join(script_dir, "core", "config", f"base_diffusion_{model_type}_{'style' if is_style else 'person'}.toml")
+    
+    # Fallback to base template (e.g., base_diffusion_flux.toml)
+    if not os.path.exists(config_template_path):
+        config_template_path = os.path.join(script_dir, "core", "config", f"base_diffusion_{model_type}.toml")
+
     if model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]:
         config_template_path = os.path.join(script_dir, "core", "config", f"base_{model_type}.yaml")
 

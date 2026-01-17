@@ -26,16 +26,18 @@ caption_dropout_rate = 0.18
 caption_dropout_every_n_epochs = 0
 
 [training_arguments]
-mixed_precision = "bf16"
-save_precision = "bf16"
 output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
+persistent_data_loader_workers = true
+gradient_checkpointing = true
+mixed_precision = "bf16"
+save_precision = "bf16"
 loss_type = "huber"
 huber_c = 0.1
-huber_schedule = "snr"
 min_snr_gamma = 5
+noise_offset = 0.03
 
 [inference]
 # OPTIMIZED FOR L2 FIDELITY
