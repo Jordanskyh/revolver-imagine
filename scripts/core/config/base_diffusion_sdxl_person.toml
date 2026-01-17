@@ -21,15 +21,18 @@ cache_latents = true
 debug_dataset = false
 
 [training_arguments]
-mixed_precision = "bf16"
-save_precision = "bf16"
 output_dir = "/app/checkpoints"
 output_name = "last"
 save_model_as = "safetensors"
 max_data_loader_n_workers = 2
+persistent_data_loader_workers = true
+gradient_checkpointing = true
 gradient_accumulation_steps = 1
+mixed_precision = "bf16"
+save_precision = "bf16"
 train_batch_size = 4
 loss_type = "l2"
+xformers = true
 # noise_offset_type = "Original" 
 # noise_offset = 0.0357
 
