@@ -395,6 +395,35 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             config = toml.load(file)
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
+        
+        # FLUX Component Auto-Pathing
+        if model_type == "flux":
+            base_model_dir = "/cache/models"
+            # Auto-find ae
+            ae_path = os.path.join(os.path.dirname(model_path), "ae.safetensors")
+            if os.path.exists(ae_path):
+                config['model_arguments']['ae'] = ae_path
+            
+            # Auto-find clip_l
+            clip_l_candidates = [
+                os.path.join(base_model_dir, "clip-vit-large-patch14/model.safetensors"),
+                "/app/models/clip-vit-large-patch14/model.safetensors"
+            ]
+            for p in clip_l_candidates:
+                if os.path.exists(p):
+                    config['model_arguments']['clip_l'] = p
+                    break
+            
+            # Auto-find t5xxl
+            t5_candidates = [
+                os.path.join(base_model_dir, "t5-v1_1-xxl/model-00001-of-00002.safetensors"),
+                "/app/models/t5-v1_1-xxl/model-00001-of-00002.safetensors"
+            ]
+            for p in t5_candidates:
+                if os.path.exists(p):
+                    config['model_arguments']['t5xxl'] = p
+                    break
+
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
         if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)

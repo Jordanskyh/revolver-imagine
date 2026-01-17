@@ -1,5 +1,8 @@
 [model_arguments]
-pretrained_model_name_or_path = "/cache/models"
+pretrained_model_name_or_path = "/cache/models/rayonlabs--FLUX.1-dev/flux1-dev.safetensors"
+ae = "/cache/models/rayonlabs--FLUX.1-dev/ae.safetensors"
+clip_l = "/cache/models/clip-vit-large-patch14/model.safetensors"
+t5xxl = "/cache/models/t5-v1_1-xxl/model-00001-of-00002.safetensors"
 v_parameterization = false
 max_shift = 1.15
 base_shift = 0.5
