@@ -284,7 +284,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
         900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
         500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
-        350: {"network_dim": 128, "network_alpha": 128, "network_args": ["train_double_block_indices=all", "train_single_block_indices=all", "train_t5xxl=True"]},
+        350: {"network_dim": 128, "network_alpha": 128, "network_args": ["train_double_block_indices=0,4,8,12,16", "train_single_block_indices=0,10,20,30,37"]},
         888: {"network_dim": 96, "network_alpha": 96, "network_args": []},
         999: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=32", "conv_alpha=32"]}
     }

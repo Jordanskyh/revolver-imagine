@@ -12,7 +12,7 @@ no_half_vae = true
 network_module = "networks.lora_flux"
 network_dim = 128
 network_alpha = 128
-network_args = [ "train_double_block_indices=all", "train_single_block_indices=all", "train_t5xxl=True" ]
+network_args = [ "train_double_block_indices=0,4,8,12,16", "train_single_block_indices=0,10,20,30,37" ]
 
 [optimizer_arguments]
 optimizer_type = "Adafactor"
@@ -40,11 +40,14 @@ save_model_as = "safetensors"
 max_data_loader_n_workers = 0
 persistent_data_loader_workers = true
 gradient_checkpointing = true
+cpu_offload_checkpointing = true
 mixed_precision = "bf16"
 save_precision = "bf16"
 loss_type = "l2"
 timestep_sampling = "sigmoid"
 xformers = true
+fp8_base = true
+blocks_to_swap = 12
 
 [inference]
 # REFERENSI GOD MODE (FLUX)
