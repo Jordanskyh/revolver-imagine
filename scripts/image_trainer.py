@@ -177,6 +177,14 @@ def load_lrs_config(model_type: str, is_style: bool) -> dict:
         print(f"Warning: Could not load LRS config from {config_file}: {e}", flush=True)
         return None
 
+def create_config(task_id, model_path, model_name, model_type, expected_repo_name, trigger_word):
+    is_style = "style" in model_name.lower() or "style" in task_id.lower()
+    train_data_dir = train_cst.IMAGE_CONTAINER_IMAGES_PATH
+    
+    config_template_path = os.path.join(script_dir, "core", "config", f"base_diffusion_{model_type}_{'style' if is_style else 'person'}.toml")
+    if model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]:
+        config_template_path = os.path.join(script_dir, "core", "config", f"base_{model_type}.yaml")
+
     # --- LAYER 2: DICTIONARY & MAPPING (CHAMPION LOGIC) ---
     network_config_person = {
         "stabilityai/stable-diffusion-xl-base-1.0": 235,
