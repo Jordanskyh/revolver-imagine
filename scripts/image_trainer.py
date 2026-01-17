@@ -396,51 +396,69 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (Reconnaissance Mode)
+        # FLUX Component Auto-Pathing (ULTIMATE DISCOVERY)
         if model_type == "flux":
-            print("🚀 FLUX RECONNAISSANCE: Scanning /cache/models...", flush=True)
-            all_files = []
-            for root, dirs, files in os.walk("/cache/models"):
-                for f in files:
-                    if f.endswith(".safetensors"):
-                        p = os.path.join(root, f)
-                        sz = os.path.getsize(p) / (1024**3)
-                        all_files.append((sz, p))
-                        print(f"   [FILE] {sz:.3f} GB | {p}", flush=True)
+            print("\n🚀 [FLUX ULTIMATE DISCOVERY] Starting surgical scan...", flush=True)
+            search_bases = [os.path.dirname(model_path), "/cache/models", "/app/models", "/workspace/models"]
+            all_found = []
+            for base in search_bases:
+                if not os.path.exists(base): continue
+                for root, dirs, files in os.walk(base):
+                    for f in files:
+                        if f.endswith(".safetensors"):
+                            p = os.path.join(root, f)
+                            sz = os.path.getsize(p) / (1024**3)
+                            all_found.append((sz, p, root))
 
-            def find_best_file(pattern, min_gb=0, max_gb=100, avoid=None):
-                matches = []
-                for sz, p in all_files:
-                    if pattern in p.lower():
+            def find_surgical(name, min_gb, max_gb, pattern=None, avoid=None):
+                candidates = []
+                for sz, p, root in all_found:
+                    if min_gb <= sz <= max_gb:
                         if avoid and any(a in p.lower() for a in avoid): continue
-                        if min_gb <= sz <= max_gb:
-                            matches.append((sz, p))
+                        if pattern and pattern not in p.lower(): continue
+                        
+                        score = 0
+                        # Priority 1: Same folder as main model
+                        if os.path.dirname(model_path) in root: score += 100
+                        # Priority 2: Folder name matches component
+                        if name.lower() in root.lower(): score += 50
+                        candidates.append((score, sz, p))
                 
-                if matches:
-                    # Sort by size (usually better to pick larger for consolidated files)
-                    matches.sort(key=lambda x: x[0], reverse=True)
-                    return matches[0][1]
+                if candidates:
+                    candidates.sort(key=lambda x: (-x[0], -x[1])) # Priority score, then largest size in range
+                    return candidates[0][2]
                 return None
 
-            # 1. AE: ~0.3 GB
-            ae_path = find_best_file("ae", min_gb=0.1, max_gb=0.5)
+            # EXACT ARCHITECTURAL SIZES
+            # AE: usually 0.315 GB
+            ae_path = find_surgical("AE", 0.1, 0.45, "ae")
+            
+            # CLIP-L: usually 0.231 GB (fp16) or 0.339 GB (bf16)
+            # This STRICT range (0.2-0.45) BLOCKS SDXL's 0.65GB+ encoders
+            clip_path = find_surgical("CLIP", 0.2, 0.45)
+            
+            # T5-XXL: usually 4.6 GB (fp8) or 9.4 GB (fp16)
+            # STRICT range (4.3-10.0) BLOCKS sharded files (usually 1.0-2.3GB)
+            t5_path = find_surgical("T5", 4.3, 10.0, avoid=["of", "part"])
+            
             if ae_path: config['model_arguments']['ae'] = ae_path
-            
-            # 2. CLIP-L: MUST BE ~0.2-0.4 GB (Avoid SDXL 0.6GB+)
-            clip_l_path = find_best_file("clip", min_gb=0.2, max_gb=0.45)
-            if not clip_l_path:
-                clip_l_path = find_best_file("model", min_gb=0.2, max_gb=0.45)
-            if clip_l_path: config['model_arguments']['clip_l'] = clip_l_path
-            
-            # 3. T5-XXL: MUST BE UNIFIED (>4.3 GB) - AVOID SHARDS
-            t5_path = find_best_file("t5", min_gb=4.3, avoid=["of", "part"])
-            if not t5_path:
-                t5_path = find_best_file("model", min_gb=4.3, avoid=["of", "part"])
-            
-            if t5_path: 
-                config['model_arguments']['t5xxl'] = t5_path
+            if clip_path: config['model_arguments']['clip_l'] = clip_path
+            if t5_path: config['model_arguments']['t5xxl'] = t5_path
 
-            print(f"🎯 FLUX FINAL TARGETS:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
+            # VALIDATION DUMP
+            missing = []
+            if not ae_path: missing.append("AE (~330MB)")
+            if not clip_path: missing.append("CLIP-L (240-340MB)")
+            if not t5_path: missing.append("T5-XXL (Unified 4.7-9.5GB)")
+
+            if missing:
+                print(f"\n❌ [COHERENCE FAILURE] Missing: {', '.join(missing)}!", flush=True)
+                print("All files found for debugging:", flush=True)
+                for sz, p, _ in sorted(all_found, reverse=True): 
+                    print(f"   - {sz:.3f} GB | {p}", flush=True)
+                raise RuntimeError(f"Architecture mismatch: {missing} not found in required size ranges.")
+
+            print(f"✅ [COHERENCE OK]\n   AE: {ae_path}\n   CLIP: {clip_path}\n   T5: {t5_path}\n", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
