@@ -326,16 +326,9 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             for process in config['config']['process']:
                 if 'model' in process:
                     process['model']['name_or_path'] = model_path
-                    # FORCED DYNAMIC MAPPING (Dethrone Logic)
+                    # Follow Yaya-Simplified Logic
                     if model_type == ImageModelType.Z_IMAGE.value:
-                        adapter_filename = "zimage_turbo_training_adapter_v2.safetensors"
-                        adapter_path = os.path.join(model_path, adapter_filename)
-                        # Backup check: look in root cache if not in model dir
-                        if not os.path.exists(adapter_path):
-                            adapter_path = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, adapter_filename)
-                        
-                        process['model']['assistant_lora_path'] = adapter_path
-                        print(f"📍 Z-IMAGE ADAPTER MAPPED TO: {adapter_path}", flush=True)
+                        process['model']['assistant_lora_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "zimage_turbo_training_adapter_v2.safetensors")
                     elif model_type == ImageModelType.QWEN_IMAGE.value:
                         process['model']['qtype_te'] = "qfloat8"
                         

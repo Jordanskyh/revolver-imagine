@@ -177,28 +177,26 @@ async def main():
             print(f"Qwen-Image adapter downloaded to: {qwen_adapter_path}", flush=True)
         
         print("Downloading necessary CLIP/T5 models for offline mode...", flush=True)
-        # Ensure hub structure for trainer compatibility
-        hub_dir = os.path.join(cst.HUGGINGFACE_CACHE_PATH, "hub")
-        os.makedirs(hub_dir, exist_ok=True)
-        print(f"📍 HUGGINGFACE_CACHE_PATH is: {cst.HUGGINGFACE_CACHE_PATH}", flush=True)
-        print(f"📍 Downloading CLIP components to: {hub_dir}", flush=True)
+        # Champion Trick from image-yaya: Use Tokenizer to initialize the cache structure perfectly
+        from transformers import CLIPTokenizer
+        print("Initializing CLIP Tokenizers to populate cache structure...", flush=True)
+        CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH)
+        CLIPTokenizer.from_pretrained("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH)
         
-        # Z-Image needs BOTH versions often (Vision & Text)
-        print("Downloading CLIP Large (OpenAI)...", flush=True)
-        snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=hub_dir, local_dir_use_symlinks=False)
+        # Now follow up with full snapshot download
+        from huggingface_hub import snapshot_download
+        print("Downloading full snapshots...", flush=True)
+        snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
+        snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
         
-        print("Downloading CLIP bigG (LAION) - Required for Z-Image/SDXL...", flush=True)
-        snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=hub_dir, local_dir_use_symlinks=False)
-        
-        if args.model_type == ImageModelType.FLUX.value:
-            print("Downloading T5 model for Flux...", flush=True)
-            snapshot_download(
-                repo_id="google/t5-v1_1-xxl",
-                repo_type="model",
-                cache_dir=hub_dir,
-                local_dir_use_symlinks=False,
-                allow_patterns=["tokenizer_config.json", "spiece.model", "special_tokens_map.json", "config.json"],
-            )
+        print("Downloading T5 component for Flux...", flush=True)
+        snapshot_download(
+            repo_id="google/t5-v1_1-xxl",
+            repo_type="model",
+            cache_dir=cst.HUGGINGFACE_CACHE_PATH,
+            local_dir_use_symlinks=False,
+            allow_patterns=["tokenizer_config.json", "spiece.model", "special_tokens_map.json", "config.json"],
+        )
     else:
         dataset_path, _ = await download_text_dataset(args.task_id, args.dataset, args.file_format, dataset_dir)
         model_path = await download_axolotl_base_model(args.model, model_dir)
