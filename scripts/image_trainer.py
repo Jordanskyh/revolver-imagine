@@ -396,25 +396,31 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (Battle-Hardened Autodiscovery)
+        # FLUX Component Auto-Pathing (Surgical Autodiscovery)
         if model_type == "flux":
             def find_best_file(base_dir, pattern, min_gb=0, max_gb=100, preferred_dir=None, avoid=None):
                 candidates = []
-                for root, dirs, files in os.walk(base_dir):
-                    for f in files:
-                        if f.endswith(".safetensors") and pattern in f.lower():
-                            if avoid and avoid in f.lower(): continue
-                            
-                            path = os.path.join(root, f)
-                            size_gb = os.path.getsize(path) / (1024**3)
-                            if min_gb <= size_gb <= max_gb:
-                                score = 0
-                                if preferred_dir and preferred_dir in root.lower(): score += 10
-                                if pattern in f.lower(): score += 5
-                                candidates.append((score, path))
+                # First, check the directory where the main model is (highest coherence)
+                model_dir = os.path.dirname(model_path)
+                search_paths = [model_dir, base_dir] if model_dir != base_dir else [base_dir]
+                
+                for s_path in search_paths:
+                    for root, dirs, files in os.walk(s_path):
+                        for f in files:
+                            if f.endswith(".safetensors") and pattern in f.lower():
+                                if avoid and any(a in f.lower() for a in avoid): continue
+                                
+                                path = os.path.join(root, f)
+                                size_gb = os.path.getsize(path) / (1024**3)
+                                if min_gb <= size_gb <= max_gb:
+                                    score = 0
+                                    if preferred_dir and preferred_dir in root.lower(): score += 20
+                                    if s_path == model_dir: score += 10 # High priority for same-folder assets
+                                    if pattern in f.lower(): score += 5
+                                    candidates.append((score, path))
+                    if candidates: break # Found in priority directory, stop searching elsewhere
                 
                 if candidates:
-                    # Sort by score descending, then by path
                     candidates.sort(key=lambda x: (-x[0], x[1]))
                     return candidates[0][1]
                 return None
@@ -422,29 +428,27 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             base_models = "/cache/models"
             
             # 1. Find AE (AutoEncoder) - (~300MB)
-            ae_path = find_best_file(os.path.dirname(model_path), "ae", max_gb=0.5) or find_best_file(base_models, "ae", max_gb=0.5)
+            ae_path = find_best_file(base_models, "ae", max_gb=0.5)
             if ae_path: config['model_arguments']['ae'] = ae_path
             
-            # 2. Find CLIP-L - (STRICT: 100MB - 400MB)
-            # This is critical to avoid SDXL's 650MB-1.3GB text encoders.
-            clip_l_path = find_best_file(base_models, "model", min_gb=0.1, max_gb=0.42, preferred_dir="clip-vit-large-patch14")
+            # 2. Find CLIP-L - (ULTRA-STRICT: 150MB - 380MB)
+            # Standard CLIP-L is ~240MB (fp16) or ~340MB (bf16). SDXL is >600MB.
+            clip_l_path = find_best_file(base_models, "clip", min_gb=0.15, max_gb=0.45, preferred_dir="clip-vit-large-patch14")
             if not clip_l_path:
-                clip_l_path = find_best_file(base_models, "clip", min_gb=0.1, max_gb=0.42)
-                
-            if clip_l_path: 
-                config['model_arguments']['clip_l'] = clip_l_path
+                clip_l_path = find_best_file(base_models, "model", min_gb=0.15, max_gb=0.45)
+            if clip_l_path: config['model_arguments']['clip_l'] = clip_l_path
             
-            # 3. Find T5XXL - BIG file (>4GB), AVOID shards ("of")
-            t5_path = find_best_file(base_models, "t5", min_gb=4.0, avoid="of") or find_best_file(base_models, "model", min_gb=4.0, avoid="of")
-            # Fallback if no unified T5, try to pick the largest one anyway (riskier)
+            # 3. Find T5XXL - Search for UNIFIED file (>9GB)
+            # Avoid sharded files like "part-00001-of-00002"
+            t5_path = find_best_file(base_models, "t5", min_gb=4.0, avoid=["of", "part"])
             if not t5_path:
+                # Fallback to the largest thing that looks like t5 if no unified found
                 t5_path = find_best_file(base_models, "t5", min_gb=4.0)
-
-            if t5_path: 
-                config['model_arguments']['t5xxl'] = t5_path
+                
+            if t5_path: config['model_arguments']['t5xxl'] = t5_path
 
             # Log discovered paths for debugging
-            print(f"🔍 FLUX TARGETING SYSTEM:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
+            print(f"🔍 FLUX SURGICAL DISCOVERY:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
