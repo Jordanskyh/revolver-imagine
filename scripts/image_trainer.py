@@ -30,14 +30,9 @@ from core.models.utility_models import ImageModelType
 
 def get_model_path(path: str) -> str:
     if os.path.isdir(path):
-        # Filter for safetensors files
-        files = [f for f in os.listdir(path) if f.endswith(".safetensors") and os.path.isfile(os.path.join(path, f))]
-        
-        if len(files) > 0:
-            # If multiple safetensors, pick the largest one (likely the model)
-            largest_file = max(files, key=lambda f: os.path.getsize(os.path.join(path, f)))
-            return os.path.join(path, largest_file)
-            
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        if len(files) == 1 and files[0].endswith(".safetensors"):
+            return os.path.join(path, files[0])
     return path
 def merge_model_config(default_config: dict, model_config: dict) -> dict:
     merged = {}
