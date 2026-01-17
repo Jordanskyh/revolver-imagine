@@ -396,9 +396,23 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (GOD MODE - DEFINITIVE)
-        if model_type == "flux":
-            print("\n� [FLUX GOD MODE] Starting surgical asset fingerprinting...", flush=True)
+        # FLUX Component Auto-Pathing (V2.5-GOLDEN - VALIDATOR STANDARD)
+        if "flux" in model_type:
+            print("\n[FLUX V2.5-GOLDEN] Surgical Asset Fingerprinting...", flush=True)
+            
+            # 1. Hard-check Validator Standard Paths (Top Priority)
+            std_mapping = {
+                'ae': "/cache/models/ae.safetensors",
+                'clip_l': "/cache/models/clip_l.safetensors",
+                't5xxl': "/cache/models/t5xxl.safetensors"
+            }
+            for key, path in std_mapping.items():
+                if os.path.exists(path):
+                    if key not in config['model_arguments']: config['model_arguments'][key] = {}
+                    config['model_arguments'][key] = path
+                    print(f"   [VALIDATOR] Standard path found: {key} -> {path}", flush=True)
+
+            # 2. Surgical Discovery (Secondary if standard paths missing)
             search_bases = ["/cache/models", "/app/models", "/workspace/models", os.path.dirname(model_path)]
             files_found = []
             for b_dir in search_bases:
@@ -410,41 +424,37 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                             sz = os.path.getsize(p) / (1024**3)
                             files_found.append({"path": p, "size": sz, "root": root})
 
-            def find_surgical(name, golden_min, golden_max, must_contain=None, avoid=["part", "of-", "sharded"]):
+            def find_surgical(name, golden_min, golden_max, avoid=["part", "of-", "shard"]):
+                # Skip if already found via standard path
+                if config['model_arguments'].get(name.lower().replace('-l', '_l')): return config['model_arguments'][name.lower().replace('-l', '_l')]
                 matches = []
                 for entry in files_found:
                     p, sz, root = entry["path"], entry["size"], entry["root"]
                     if golden_min <= sz <= golden_max:
                         if avoid and any(a in p.lower() for a in avoid): continue
-                        if must_contain and must_contain not in p.lower(): continue
-                        
                         score = 0
                         if "flux" in p.lower() or "flux" in root.lower(): score += 100
                         if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
                         matches.append((score, sz, p))
-                
                 if matches:
-                    matches.sort(key=lambda x: (-x[0], -x[1])) # Best match, then largest
-                    print(f"   [MATCH] Found {name}: {matches[0][2]} ({matches[0][1]:.3f} GB)", flush=True)
+                    matches.sort(key=lambda x: (-x[0], -x[1]))
                     return matches[0][2]
                 return None
 
-            # GOLDEN FINGERPRINTS
-            ae_path = find_surgical("AE", 0.3, 0.45, must_contain="ae")
-            # CLIP-L FLUX is exactly 0.231GB or 0.339GB. SDXL is always >0.6GB.
-            clip_path = find_surgical("CLIP", 0.2, 0.45) 
-            # T5 XXL is 4.7GB (fp8) or 9.5GB (fp16). Shards are usually <3GB.
-            t5_path = find_surgical("T5", 4.3, 11.0, avoid=["part", "of-", "shard"])
+            if not config['model_arguments'].get('ae'):
+                config['model_arguments']['ae'] = find_surgical("AE", 0.3, 0.45)
+            if not config['model_arguments'].get('clip_l'):
+                config['model_arguments']['clip_l'] = find_surgical("CLIP", 0.2, 0.45)
+            if not config['model_arguments'].get('t5xxl'):
+                config['model_arguments']['t5xxl'] = find_surgical("T5", 4.3, 11.0)
 
-            if ae_path: config['model_arguments']['ae'] = ae_path
-            if clip_path: config['model_arguments']['clip_l'] = clip_path
-            if t5_path: config['model_arguments']['t5xxl'] = t5_path
-
-            if not (ae_path and clip_path and t5_path):
-                print("❌ [GOD MODE FAILURE] Missing vital FLUX components!", flush=True)
+            if not (config['model_arguments'].get('ae') and config['model_arguments'].get('clip_l') and config['model_arguments'].get('t5xxl')):
+                print("\n[COHERENCE FAILURE] Missing vital FLUX components!", flush=True)
                 for e in sorted(files_found, key=lambda x: x['size'], reverse=True):
                     print(f"   - {e['size']:.3f} GB | {e['path']}", flush=True)
                 raise RuntimeError("Architectural Mismatch: Could not find unified FLUX components.")
+
+            print(f"✅ [ASSET CHECK] AE: {config['model_arguments'].get('ae')}, CLIP: {config['model_arguments'].get('clip_l')}, T5: {config['model_arguments'].get('t5xxl')}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
@@ -483,51 +493,46 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     config[key] = value
 
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
+        
+        print(f"\n📝 [TOML PREVIEW] Paths for FLUX core components:")
+        print(f"   - pretrained_model: {config['model_arguments'].get('pretrained_model_name_or_path')}")
+        print(f"   - ae: {config['model_arguments'].get('ae')}")
+        print(f"   - clip_l: {config['model_arguments'].get('clip_l')}")
+        print(f"   - t5xxl: {config['model_arguments'].get('t5xxl')}\n")
+
         save_config_toml(config, config_path)
         print(f"Created config at {config_path}", flush=True)
         return config_path
-    return config_path
-
+    except Exception as e:
+        print(f"Error during create_config: {e}")
+        return None
 
 def run_training(model_type, config_path):
-    print(f"Starting training with config: {config_path}", flush=True)
-    with open(config_path, "r") as f:
-        print(f"--- CONFIG CONTENT ---\n{f.read()}\n--- END CONFIG ---", flush=True)
-
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
     
     if is_ai_toolkit:
-        training_command = [
-            "python3",
-            "/app/ai-toolkit/run.py",
-            config_path
-        ]
+        training_command = ["python3", "/app/ai-toolkit/run.py", config_path]
     else:
-        # ULTIMATE STABILITY FIX: Forced direct python3 for ALL Flux variants
+        # ULTIMATE STABILITY: FLUX needs direct python3; SDXL needs accelerate
         if "flux" in model_type:
             training_command = [
                 "python3",
-                f"/app/sd-scripts/flux_train_network.py",
+                "/app/sd-scripts/flux_train_network.py",
                 "--config_file", config_path,
                 "--disable_mmap_load_safetensors"
             ]
         elif "sdxl" in model_type:
             training_command = [
                 "accelerate", "launch",
-                "--dynamo_backend", "no",
-                "--dynamo_mode", "default",
-                "--mixed_precision", "bf16",
-                "--num_processes", "1",
-                "--num_machines", "1",
-                "--num_cpu_threads_per_process", "2",
-                f"/app/sd-script/sdxl_train_network.py",
+                "--dynamo_backend", "no", "--dynamo_mode", "default",
+                "--mixed_precision", "bf16", "--num_processes", "1",
+                "--num_machines", "1", "--num_cpu_threads_per_process", "2",
+                "/app/sd-script/sdxl_train_network.py",
                 "--config_file", config_path
             ]
         else:
-            # Generic fallback
             training_command = [
-                "accelerate", "launch",
-                "--mixed_precision", "bf16",
+                "accelerate", "launch", "--mixed_precision", "bf16",
                 f"/app/sd-scripts/{model_type}_train_network.py",
                 "--config_file", config_path
             ]
