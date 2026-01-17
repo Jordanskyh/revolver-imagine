@@ -45,7 +45,6 @@ save_precision = "bf16"
 loss_type = "l2"
 timestep_sampling = "sigmoid"
 xformers = true
-fp8_base = true
 blocks_to_swap = 12
 
 [inference]
