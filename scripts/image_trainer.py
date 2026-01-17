@@ -396,69 +396,55 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (ULTIMATE DISCOVERY)
+        # FLUX Component Auto-Pathing (GOD MODE - DEFINITIVE)
         if model_type == "flux":
-            print("\n🚀 [FLUX ULTIMATE DISCOVERY] Starting surgical scan...", flush=True)
-            search_bases = [os.path.dirname(model_path), "/cache/models", "/app/models", "/workspace/models"]
-            all_found = []
-            for base in search_bases:
-                if not os.path.exists(base): continue
-                for root, dirs, files in os.walk(base):
+            print("\n� [FLUX GOD MODE] Starting surgical asset fingerprinting...", flush=True)
+            search_bases = ["/cache/models", "/app/models", "/workspace/models", os.path.dirname(model_path)]
+            files_found = []
+            for b_dir in search_bases:
+                if not os.path.exists(b_dir): continue
+                for root, _, files in os.walk(b_dir):
                     for f in files:
                         if f.endswith(".safetensors"):
                             p = os.path.join(root, f)
                             sz = os.path.getsize(p) / (1024**3)
-                            all_found.append((sz, p, root))
+                            files_found.append({"path": p, "size": sz, "root": root})
 
-            def find_surgical(name, min_gb, max_gb, pattern=None, avoid=None):
-                candidates = []
-                for sz, p, root in all_found:
-                    if min_gb <= sz <= max_gb:
+            def find_surgical(name, golden_min, golden_max, must_contain=None, avoid=["part", "of-", "sharded"]):
+                matches = []
+                for entry in files_found:
+                    p, sz, root = entry["path"], entry["size"], entry["root"]
+                    if golden_min <= sz <= golden_max:
                         if avoid and any(a in p.lower() for a in avoid): continue
-                        if pattern and pattern not in p.lower(): continue
+                        if must_contain and must_contain not in p.lower(): continue
                         
                         score = 0
-                        # Priority 1: Same folder as main model
-                        if os.path.dirname(model_path) in root: score += 100
-                        # Priority 2: Folder name matches component
-                        if name.lower() in root.lower(): score += 50
-                        candidates.append((score, sz, p))
+                        if "flux" in p.lower() or "flux" in root.lower(): score += 100
+                        if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
+                        matches.append((score, sz, p))
                 
-                if candidates:
-                    candidates.sort(key=lambda x: (-x[0], -x[1])) # Priority score, then largest size in range
-                    return candidates[0][2]
+                if matches:
+                    matches.sort(key=lambda x: (-x[0], -x[1])) # Best match, then largest
+                    print(f"   [MATCH] Found {name}: {matches[0][2]} ({matches[0][1]:.3f} GB)", flush=True)
+                    return matches[0][2]
                 return None
 
-            # EXACT ARCHITECTURAL SIZES
-            # AE: usually 0.315 GB
-            ae_path = find_surgical("AE", 0.1, 0.45, "ae")
-            
-            # CLIP-L: usually 0.231 GB (fp16) or 0.339 GB (bf16)
-            # This STRICT range (0.2-0.45) BLOCKS SDXL's 0.65GB+ encoders
-            clip_path = find_surgical("CLIP", 0.2, 0.45)
-            
-            # T5-XXL: usually 4.6 GB (fp8) or 9.4 GB (fp16)
-            # STRICT range (4.3-10.0) BLOCKS sharded files (usually 1.0-2.3GB)
-            t5_path = find_surgical("T5", 4.3, 10.0, avoid=["of", "part"])
-            
+            # GOLDEN FINGERPRINTS
+            ae_path = find_surgical("AE", 0.3, 0.45, must_contain="ae")
+            # CLIP-L FLUX is exactly 0.231GB or 0.339GB. SDXL is always >0.6GB.
+            clip_path = find_surgical("CLIP", 0.2, 0.45) 
+            # T5 XXL is 4.7GB (fp8) or 9.5GB (fp16). Shards are usually <3GB.
+            t5_path = find_surgical("T5", 4.3, 11.0, avoid=["part", "of-", "shard"])
+
             if ae_path: config['model_arguments']['ae'] = ae_path
             if clip_path: config['model_arguments']['clip_l'] = clip_path
             if t5_path: config['model_arguments']['t5xxl'] = t5_path
 
-            # VALIDATION DUMP
-            missing = []
-            if not ae_path: missing.append("AE (~330MB)")
-            if not clip_path: missing.append("CLIP-L (240-340MB)")
-            if not t5_path: missing.append("T5-XXL (Unified 4.7-9.5GB)")
-
-            if missing:
-                print(f"\n❌ [COHERENCE FAILURE] Missing: {', '.join(missing)}!", flush=True)
-                print("All files found for debugging:", flush=True)
-                for sz, p, _ in sorted(all_found, reverse=True): 
-                    print(f"   - {sz:.3f} GB | {p}", flush=True)
-                raise RuntimeError(f"Architecture mismatch: {missing} not found in required size ranges.")
-
-            print(f"✅ [COHERENCE OK]\n   AE: {ae_path}\n   CLIP: {clip_path}\n   T5: {t5_path}\n", flush=True)
+            if not (ae_path and clip_path and t5_path):
+                print("❌ [GOD MODE FAILURE] Missing vital FLUX components!", flush=True)
+                for e in sorted(files_found, key=lambda x: x['size'], reverse=True):
+                    print(f"   - {e['size']:.3f} GB | {e['path']}", flush=True)
+                raise RuntimeError("Architectural Mismatch: Could not find unified FLUX components.")
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
@@ -517,7 +503,15 @@ def run_training(model_type, config_path):
             config_path
         ]
     else:
-        if model_type == "sdxl":
+        # For FLUX, direct python3 is MORE stable in Docker than accelerate launch
+        if model_type == "flux":
+            training_command = [
+                "python3",
+                f"/app/sd-scripts/{model_type}_train_network.py",
+                "--config_file", config_path,
+                "--disable_mmap_load_safetensors"
+            ]
+        elif model_type == "sdxl":
             training_command = [
                 "accelerate", "launch",
                 "--dynamo_backend", "no",
@@ -529,21 +523,17 @@ def run_training(model_type, config_path):
                 f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path
             ]
-        elif model_type == "flux":
+        else:
+            # Generic fallback for other models
             training_command = [
                 "accelerate", "launch",
-                "--dynamo_backend", "no",
-                "--dynamo_mode", "default",
                 "--mixed_precision", "bf16",
-                "--num_processes", "1",
-                "--num_machines", "1",
-                "--num_cpu_threads_per_process", "2",
                 f"/app/sd-scripts/{model_type}_train_network.py",
                 "--config_file", config_path
             ]
-
+    
     try:
-        print("Starting training subprocess...\n", flush=True)
+        print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
         process = subprocess.Popen(
             training_command,
             stdout=subprocess.PIPE,
