@@ -394,7 +394,10 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         with open(config_template_path, "r") as file:
             config = toml.load(file)
 
-        config['model_arguments']['pretrained_model_name_or_path'] = model_path
+        if 'model_arguments' in config:
+            config['model_arguments']['pretrained_model_name_or_path'] = model_path
+        else:
+            config['pretrained_model_name_or_path'] = model_path
         
         # FLUX Component Auto-Pathing (G.O.D ALIGNMENT)
         if model_type == "flux":
