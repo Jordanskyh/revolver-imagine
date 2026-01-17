@@ -503,15 +503,15 @@ def run_training(model_type, config_path):
             config_path
         ]
     else:
-        # For FLUX, direct python3 is MORE stable in Docker than accelerate launch
-        if model_type == "flux":
+        # ULTIMATE STABILITY FIX: Forced direct python3 for ALL Flux variants
+        if "flux" in model_type:
             training_command = [
                 "python3",
-                f"/app/sd-scripts/{model_type}_train_network.py",
+                f"/app/sd-scripts/flux_train_network.py",
                 "--config_file", config_path,
                 "--disable_mmap_load_safetensors"
             ]
-        elif model_type == "sdxl":
+        elif "sdxl" in model_type:
             training_command = [
                 "accelerate", "launch",
                 "--dynamo_backend", "no",
@@ -520,11 +520,11 @@ def run_training(model_type, config_path):
                 "--num_processes", "1",
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
-                f"/app/sd-script/{model_type}_train_network.py",
+                f"/app/sd-script/sdxl_train_network.py",
                 "--config_file", config_path
             ]
         else:
-            # Generic fallback for other models
+            # Generic fallback
             training_command = [
                 "accelerate", "launch",
                 "--mixed_precision", "bf16",
