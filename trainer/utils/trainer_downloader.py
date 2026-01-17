@@ -177,16 +177,23 @@ async def main():
             print(f"Qwen-Image adapter downloaded to: {qwen_adapter_path}", flush=True)
         
         print("Downloading necessary CLIP/T5 models for offline mode...", flush=True)
-        # Always download basic CLIP for general compatibility
-        snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
+        # Ensure hub structure for trainer compatibility
+        hub_dir = os.path.join(cst.HUGGINGFACE_CACHE_PATH, "hub")
+        os.makedirs(hub_dir, exist_ok=True)
+        
+        # Z-Image needs BOTH versions often (Vision & Text)
+        print("Downloading CLIP Large (OpenAI)...", flush=True)
+        snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=hub_dir, local_dir_use_symlinks=False)
+        
+        print("Downloading CLIP bigG (LAION) - Required for Z-Image/SDXL...", flush=True)
+        snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=hub_dir, local_dir_use_symlinks=False)
         
         if args.model_type == ImageModelType.FLUX.value:
-            print("Downloading Flux-specific heavy models (CLIP-bigG & T5)...", flush=True)
-            snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
+            print("Downloading T5 model for Flux...", flush=True)
             snapshot_download(
                 repo_id="google/t5-v1_1-xxl",
                 repo_type="model",
-                cache_dir=cst.HUGGINGFACE_CACHE_PATH,
+                cache_dir=hub_dir,
                 local_dir_use_symlinks=False,
                 allow_patterns=["tokenizer_config.json", "spiece.model", "special_tokens_map.json", "config.json"],
             )

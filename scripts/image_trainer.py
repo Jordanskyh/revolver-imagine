@@ -326,11 +326,18 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             for process in config['config']['process']:
                 if 'model' in process:
                     process['model']['name_or_path'] = model_path
-                    # Dynamically find assistant lora in model dir
-                    if model_type == "z-image":
-                        process['model']['assistant_lora_path'] = os.path.join(model_path, "zimage_turbo_training_adapter_v2.safetensors")
-                    elif model_type == "qwen-image":
-                        process['model']['qtype_te'] = "qfloat8" # Ensure consistency
+                    # FORCED DYNAMIC MAPPING (Dethrone Logic)
+                    if model_type == ImageModelType.Z_IMAGE.value:
+                        adapter_filename = "zimage_turbo_training_adapter_v2.safetensors"
+                        adapter_path = os.path.join(model_path, adapter_filename)
+                        # Backup check: look in root cache if not in model dir
+                        if not os.path.exists(adapter_path):
+                            adapter_path = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, adapter_filename)
+                        
+                        process['model']['assistant_lora_path'] = adapter_path
+                        print(f"📍 Z-IMAGE ADAPTER MAPPED TO: {adapter_path}", flush=True)
+                    elif model_type == ImageModelType.QWEN_IMAGE.value:
+                        process['model']['qtype_te'] = "qfloat8"
                         
                     if 'training_folder' in process:
                         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
