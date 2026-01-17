@@ -111,10 +111,19 @@ class FluxNetworkTrainer(train_network.NetworkTrainer):
             model_type=self.model_type,
         )
         if args.fp8_base:
-            # check dtype of model
-            if model.dtype == torch.float8_e4m3fnuz or model.dtype == torch.float8_e5m2 or model.dtype == torch.float8_e5m2fnuz:
+            # check dtype of model - with backward compatibility for older PyTorch
+            fp8_e4m3fnuz = getattr(torch, 'float8_e4m3fnuz', None)
+            fp8_e5m2 = getattr(torch, 'float8_e5m2', None)
+            fp8_e5m2fnuz = getattr(torch, 'float8_e5m2fnuz', None)
+            fp8_e4m3fn = getattr(torch, 'float8_e4m3fn', None)
+            
+            if fp8_e4m3fnuz and model.dtype == fp8_e4m3fnuz:
                 raise ValueError(f"Unsupported fp8 model dtype: {model.dtype}")
-            elif model.dtype == torch.float8_e4m3fn:
+            elif fp8_e5m2 and model.dtype == fp8_e5m2:
+                raise ValueError(f"Unsupported fp8 model dtype: {model.dtype}")
+            elif fp8_e5m2fnuz and model.dtype == fp8_e5m2fnuz:
+                raise ValueError(f"Unsupported fp8 model dtype: {model.dtype}")
+            elif fp8_e4m3fn and model.dtype == fp8_e4m3fn:
                 logger.info("Loaded fp8 FLUX model")
             else:
                 logger.info(
