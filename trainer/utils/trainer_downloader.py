@@ -176,11 +176,9 @@ async def main():
             )
             print(f"Qwen-Image adapter downloaded to: {qwen_adapter_path}", flush=True)
         
-        from transformers import CLIPTokenizer, CLIPVisionModelWithProjection
         print("Downloading clip models (Tokenizers & Vision Encoders)...", flush=True)
-        CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH)
-        CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH)
-        CLIPTokenizer.from_pretrained("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH)
+        snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
+        snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
         snapshot_download(
             repo_id="google/t5-v1_1-xxl",
             repo_type="model",
