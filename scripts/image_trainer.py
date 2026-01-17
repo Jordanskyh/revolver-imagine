@@ -284,7 +284,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         699: {"network_dim": 96, "network_alpha": 96, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
         900: {"network_dim": 128, "network_alpha": 128, "network_args": ["conv_dim=32", "conv_alpha=32", "algo=locon"]},
         500: {"network_dim": 64, "network_alpha": 64, "network_args": ["conv_dim=4", "conv_alpha=4", "dropout=0"]},
-        350: {"network_dim": 32, "network_alpha": 32, "network_args": []},
+        350: {"network_dim": 128, "network_alpha": 128, "network_args": ["train_double_block_indices=all", "train_single_block_indices=all", "train_t5xxl=True"]},
         888: {"network_dim": 96, "network_alpha": 96, "network_args": []},
         999: {"network_dim": 32, "network_alpha": 32, "network_args": ["conv_dim=32", "conv_alpha=32"]}
     }
@@ -396,55 +396,79 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (GOD MODE - DEFINITIVE)
+        # FLUX Component Auto-Pathing (G.O.D ALIGNMENT)
         if model_type == "flux":
-            print("\n� [FLUX GOD MODE] Starting surgical asset fingerprinting...", flush=True)
-            search_bases = ["/cache/models", "/app/models", "/workspace/models", os.path.dirname(model_path)]
-            files_found = []
-            for b_dir in search_bases:
-                if not os.path.exists(b_dir): continue
-                for root, _, files in os.walk(b_dir):
-                    for f in files:
-                        if f.endswith(".safetensors"):
-                            p = os.path.join(root, f)
-                            sz = os.path.getsize(p) / (1024**3)
-                            files_found.append({"path": p, "size": sz, "root": root})
+            print("\n[FLUX GOD MODE] Starting precision asset fingerprinting...", flush=True)
+            
+            # 1. HARD-PRIORITY: Standard Validator/GOD Paths
+            # Alignment: G.O.D often places them in /cache/models or /app/flux
+            std_paths = {
+                'ae': "/cache/models/ae.safetensors",
+                'clip_l': "/cache/models/clip_l.safetensors",
+                't5xxl': "/cache/models/t5xxl.safetensors"
+            }
+            
+            # G.O.D Template compatibility: Ensure keys exist at top level or in model_arguments
+            def set_flux_arg(k, v):
+                config[k] = v # GOD style (Flat)
+                if 'model_arguments' not in config: config['model_arguments'] = {}
+                config['model_arguments'][k] = v # Legacy style
 
-            def find_surgical(name, golden_min, golden_max, must_contain=None, avoid=["part", "of-", "sharded"]):
-                matches = []
-                for entry in files_found:
-                    p, sz, root = entry["path"], entry["size"], entry["root"]
-                    if golden_min <= sz <= golden_max:
-                        if avoid and any(a in p.lower() for a in avoid): continue
-                        if must_contain and must_contain not in p.lower(): continue
-                        
-                        score = 0
-                        if "flux" in p.lower() or "flux" in root.lower(): score += 100
-                        if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
-                        matches.append((score, sz, p))
-                
-                if matches:
-                    matches.sort(key=lambda x: (-x[0], -x[1])) # Best match, then largest
-                    print(f"   [MATCH] Found {name}: {matches[0][2]} ({matches[0][1]:.3f} GB)", flush=True)
-                    return matches[0][2]
-                return None
+            for key, path in std_paths.items():
+                if os.path.exists(path):
+                    set_flux_arg(key, path)
+                    print(f"   [VALIDATOR] Found {key} at {path}", flush=True)
 
-            # GOLDEN FINGERPRINTS
-            ae_path = find_surgical("AE", 0.3, 0.45, must_contain="ae")
-            # CLIP-L FLUX is exactly 0.231GB or 0.339GB. SDXL is always >0.6GB.
-            clip_path = find_surgical("CLIP", 0.2, 0.45) 
-            # T5 XXL is 4.7GB (fp8) or 9.5GB (fp16). Shards are usually <3GB.
-            t5_path = find_surgical("T5", 4.3, 11.0, avoid=["part", "of-", "shard"])
+            # 2. FALLBACK/DISCOVERY: If any components are still missing or invalid
+            missing = [k for k in ['ae', 'clip_l', 't5xxl'] if not os.path.exists(config.get(k, ""))]
+            if missing:
+                search_bases = ["/cache/models", "/app/models", "/app/flux", "/workspace/models", os.path.dirname(model_path)]
+                files_found = []
+                for b_dir in search_bases:
+                    if not os.path.exists(b_dir): continue
+                    for root, _, files in os.walk(b_dir):
+                        for f in files:
+                            if f.endswith(".safetensors"):
+                                p = os.path.join(root, f)
+                                sz = os.path.getsize(p) / (1024**3)
+                                files_found.append({"path": p, "size": sz, "root": root})
 
-            if ae_path: config['model_arguments']['ae'] = ae_path
-            if clip_path: config['model_arguments']['clip_l'] = clip_path
-            if t5_path: config['model_arguments']['t5xxl'] = t5_path
+                def find_surgical(name, golden_min, golden_max, must_contain=None, avoid=["part", "of-", "sharded"]):
+                    matches = []
+                    for entry in files_found:
+                        p, sz, root = entry["path"], entry["size"], entry["root"]
+                        if golden_min <= sz <= golden_max:
+                            if avoid and any(a in p.lower() for a in avoid): continue
+                            if must_contain and must_contain not in p.lower(): continue
+                            score = 0
+                            if "flux" in p.lower() or "flux" in root.lower(): score += 100
+                            if name.lower() in p.lower() or name.lower() in root.lower(): score += 50
+                            matches.append((score, sz, p))
+                    if matches:
+                        matches.sort(key=lambda x: (-x[0], -x[1]))
+                        return matches[0][2]
+                    return None
 
-            if not (ae_path and clip_path and t5_path):
+                if 'ae' in missing:
+                    path = find_surgical("AE", 0.3, 0.45, must_contain="ae")
+                    if path: set_flux_arg('ae', path)
+                if 'clip_l' in missing:
+                    path = find_surgical("CLIP", 0.2, 0.45) or "/app/models/clip_l.safetensors"
+                    if path: set_flux_arg('clip_l', path)
+                if 't5xxl' in missing:
+                    path = find_surgical("T5", 4.3, 11.0, avoid=["part", "of-", "shard"])
+                    if path: set_flux_arg('t5xxl', path)
+
+            # 3. CRITICAL COHERENCE CHECK
+            final_ae = config.get('ae')
+            final_clip = config.get('clip_l')
+            final_t5 = config.get('t5xxl')
+
+            if not (final_ae and final_clip and final_t5 and os.path.exists(final_clip)):
                 print("❌ [GOD MODE FAILURE] Missing vital FLUX components!", flush=True)
-                for e in sorted(files_found, key=lambda x: x['size'], reverse=True):
-                    print(f"   - {e['size']:.3f} GB | {e['path']}", flush=True)
-                raise RuntimeError("Architectural Mismatch: Could not find unified FLUX components.")
+                print(f"   Current Resolution: AE={final_ae}, CLIP={final_clip}, T5={final_t5}", flush=True)
+
+            print(f"✅ [ASSET SYNC] AE: {final_ae}, CLIP: {final_clip}, T5: {final_t5}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
@@ -452,6 +476,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         config['output_dir'] = output_dir
 
         # Apply Overrides to TOML
+        # For FLUX, many parameters are top-level or in different sections
         section_map = {
             "unet_lr": ("optimizer_arguments", "learning_rate"),
             "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
@@ -460,6 +485,11 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             "optimizer_type": ("optimizer_arguments", "optimizer_type"),
             "optimizer_args": ("optimizer_arguments", "optimizer_args"),
         }
+        
+        # FLUX Specific Direct Overrides (G.O.D Style)
+        if model_type == "flux":
+            section_map["unet_lr"] = (None, "unet_lr") # Direct top-level
+            section_map["text_encoder_lr"] = (None, "text_encoder_lr") # Direct top-level
 
         # Apply Overrides (Priority: Autoepoch < LRS)
         configs_to_apply = [size_config, lrs_settings]
@@ -469,15 +499,13 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 continue
                 
             for key, value in cfg.items():
-                # Prodigy Fix: If text_encoder_lr is the same as unet_lr, don't set it separately.
-                if key == "text_encoder_lr" and str(cfg.get("unet_lr")) == str(value):
-                    continue
-
                 if key in section_map:
                     sec, target = section_map[key]
-                    if sec not in config:
-                        config[sec] = {}
-                    config[sec][target] = value
+                    if sec:
+                        if sec not in config: config[sec] = {}
+                        config[sec][target] = value
+                    else:
+                        config[target] = value # Flat injection
                 else:
                     # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
                     config[key] = value
