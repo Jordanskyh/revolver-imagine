@@ -335,12 +335,53 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     for dataset in process['datasets']:
                         dataset['folder_path'] = train_data_dir
 
+                # --- ADVANCED AUTO-SCALING (JORDANSKY TUNING) ---
+                if 'train' not in process: process['train'] = {}
+                
+                def calculate_steps(epochs):
+                    batch_size = process.get('train', {}).get('batch_size', 1)
+                    dataset_size = count_images_in_directory(train_data_dir)
+                    if dataset_size == 0: return epochs
+                    return int(epochs * (dataset_size / batch_size))
+
+                # 1. Apply Autoepoch (Size-based defaults)
+                if size_config:
+                    for key, value in size_config.items():
+                        if key == "max_train_epochs": process['train']['steps'] = calculate_steps(value)
+                        elif key == "optimizer_type": process['train']['optimizer'] = value
+                        elif key in ["rank", "alpha"]:
+                            block = 'network' if 'network' in process else 'adapter'
+                            if block not in process: process[block] = {}
+                            process[block][key if block == 'adapter' else ('linear' if key == 'rank' else 'linear_alpha')] = value
+                        else: process['train'][key] = value
+
+                # 2. Apply LRS Override (Task-specific precision)
+                if lrs_settings:
+                    for key, value in lrs_settings.items():
+                        if key in ["unet_lr", "text_encoder_lr", "learning_rate"]: process['train']['lr'] = value
+                        elif key in ["optimizer_type", "optimizer"]: process['train']['optimizer'] = value
+                        elif key in ["max_train_epochs", "steps"]:
+                            process['train']['steps'] = calculate_steps(value) if key == "max_train_epochs" else value
+                        elif key == "optimizer_args" and isinstance(value, list):
+                            opt_params = {}
+                            for item in value:
+                                if "=" in item:
+                                    k, v = item.split("=", 2)
+                                    if v.lower() == "true": v = True
+                                    elif v.lower() == "false": v = False
+                                    else:
+                                        try: v = float(v) if "." in v else int(v)
+                                        except ValueError: pass
+                                    opt_params[k.strip()] = v
+                            process['train']['optimizer_params'] = opt_params
+                        else: process['train'][key] = value
+
                 if trigger_word:
                     process['trigger_word'] = trigger_word
         
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.yaml")
         save_config(config, config_path)
-        print(f"Created ai-toolkit config at {config_path}", flush=True)
+        print(f"Created ai-toolkit config at {config_path} with Auto-Scaling", flush=True)
         return config_path
     else:
         with open(config_template_path, "r") as file:
