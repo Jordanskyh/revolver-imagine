@@ -34,7 +34,7 @@ config:
       qtype: qfloat8
       quantize_te: true
       qtype_te: qfloat8
-      assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors
+      assistant_lora_path: /cache/hf_cache/hub/zimage_turbo_training_adapter_v2.safetensors
     adapter:
       type: lora
       rank: 32
