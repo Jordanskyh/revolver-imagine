@@ -1,0 +1,46 @@
+job: extension
+config:
+  name: last
+  process:
+  - type: diffusion_trainer
+    training_folder: /app/checkpoints
+    device: cuda
+    datasets:
+    - folder_path: /dataset/images
+      caption_ext: txt
+      cache_latents_to_disk: true
+      resolution: [1024]
+      is_reg: false
+    train:
+      batch_size: 1
+      steps: 1300
+      lr: 1.0
+      optimizer: prodigy
+      gradient_checkpointing: true
+      noise_scheduler: flowmatch
+      timestep_type: weighted
+      dtype: bf16
+      caption_dropout_rate: 0.50
+      optimizer_params:
+        d_coef: 0.8
+        weight_decay: 0.01
+      ema_config:
+        use_ema: true
+        ema_decay: 0.99
+    model:
+      name_or_path: /cache/models
+      arch: zimage:turbo
+      quantize: true
+      qtype: qfloat8
+      quantize_te: true
+      qtype_te: qfloat8
+      assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors
+    adapter:
+      type: lora
+      rank: 32
+      alpha: 32
+      conv_dim: 32 # OPTIMIZED: Better spatial detail for L2
+      conv_alpha: 32
+meta:
+  name: zimage_lora_dethrone
+  version: '2.0'
