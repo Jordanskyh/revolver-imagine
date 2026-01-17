@@ -396,55 +396,51 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (Divine Discovery - ULTRA STRICT)
+        # FLUX Component Auto-Pathing (Reconnaissance Mode)
         if model_type == "flux":
-            def find_best_file(base_dir, pattern, min_gb=0, max_gb=100, preferred_dir=None, avoid=None):
-                candidates = []
-                for root, dirs, files in os.walk(base_dir):
-                    for f in files:
-                        if f.endswith(".safetensors") and pattern in f.lower():
-                            if avoid and any(a in f.lower() for a in avoid): continue
-                            
-                            path = os.path.join(root, f)
-                            size_gb = os.path.getsize(path) / (1024**3)
-                            if min_gb <= size_gb <= max_gb:
-                                score = 0
-                                if preferred_dir and preferred_dir in root.lower(): score += 50
-                                if "flux" in root.lower(): score += 20
-                                candidates.append((score, size_gb, path))
+            print("🚀 FLUX RECONNAISSANCE: Scanning /cache/models...", flush=True)
+            all_files = []
+            for root, dirs, files in os.walk("/cache/models"):
+                for f in files:
+                    if f.endswith(".safetensors"):
+                        p = os.path.join(root, f)
+                        sz = os.path.getsize(p) / (1024**3)
+                        all_files.append((sz, p))
+                        print(f"   [FILE] {sz:.3f} GB | {p}", flush=True)
+
+            def find_best_file(pattern, min_gb=0, max_gb=100, avoid=None):
+                matches = []
+                for sz, p in all_files:
+                    if pattern in p.lower():
+                        if avoid and any(a in p.lower() for a in avoid): continue
+                        if min_gb <= sz <= max_gb:
+                            matches.append((sz, p))
                 
-                if candidates:
-                    candidates.sort(key=lambda x: (-x[0], x[2]))
-                    return candidates[0][2]
+                if matches:
+                    # Sort by size (usually better to pick larger for consolidated files)
+                    matches.sort(key=lambda x: x[0], reverse=True)
+                    return matches[0][1]
                 return None
 
-            base_models = "/cache/models"
-            
-            # 1. AE: ~340MB
-            # range(100MB, 500MB)
-            ae_path = find_best_file(base_models, "ae", min_gb=0.1, max_gb=0.5)
+            # 1. AE: ~0.3 GB
+            ae_path = find_best_file("ae", min_gb=0.1, max_gb=0.5)
             if ae_path: config['model_arguments']['ae'] = ae_path
             
-            # 2. CLIP-L: (Must be ~240MB or ~340MB)
-            # STRICT RANGE: 0.2GB to 0.42GB. 
-            # THIS BLOCKS SDXL ENCODERS (0.6GB - 1.3GB)
-            clip_l_path = find_best_file(base_models, "model", min_gb=0.2, max_gb=0.42, preferred_dir="clip-vit-large-patch14")
+            # 2. CLIP-L: MUST BE ~0.2-0.4 GB (Avoid SDXL 0.6GB+)
+            clip_l_path = find_best_file("clip", min_gb=0.2, max_gb=0.45)
             if not clip_l_path:
-                clip_l_path = find_best_file(base_models, "clip", min_gb=0.2, max_gb=0.42)
+                clip_l_path = find_best_file("model", min_gb=0.2, max_gb=0.45)
             if clip_l_path: config['model_arguments']['clip_l'] = clip_l_path
             
-            # 3. T5-XXL: (Must be ~4.7GB or ~9.6GB)
-            # STRICT RANGE: 4.3GB to 10GB. 
-            # THIS BLOCKS SHARDS (usually 2GB each)
-            t5_path = find_best_file(base_models, "t5", min_gb=4.3, max_gb=10.0, avoid=["of", "part"])
+            # 3. T5-XXL: MUST BE UNIFIED (>4.3 GB) - AVOID SHARDS
+            t5_path = find_best_file("t5", min_gb=4.3, avoid=["of", "part"])
             if not t5_path:
-                t5_path = find_best_file(base_models, "model", min_gb=4.3, max_gb=10.0, avoid=["of", "part"])
+                t5_path = find_best_file("model", min_gb=4.3, avoid=["of", "part"])
             
             if t5_path: 
                 config['model_arguments']['t5xxl'] = t5_path
 
-            # Log discovered paths for debugging
-            print(f"🔍 FLUX DIVINE DISCOVERY:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
+            print(f"🎯 FLUX FINAL TARGETS:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
