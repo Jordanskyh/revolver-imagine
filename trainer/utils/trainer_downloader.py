@@ -180,6 +180,8 @@ async def main():
         # Ensure hub structure for trainer compatibility
         hub_dir = os.path.join(cst.HUGGINGFACE_CACHE_PATH, "hub")
         os.makedirs(hub_dir, exist_ok=True)
+        print(f"📍 HUGGINGFACE_CACHE_PATH is: {cst.HUGGINGFACE_CACHE_PATH}", flush=True)
+        print(f"📍 Downloading CLIP components to: {hub_dir}", flush=True)
         
         # Z-Image needs BOTH versions often (Vision & Text)
         print("Downloading CLIP Large (OpenAI)...", flush=True)
