@@ -327,74 +327,25 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         with open(config_template_path, "r") as file:
             config = yaml.safe_load(file)
         
-        process = config['config']['process'][0]
-        process['model']['name_or_path'] = model_path
-        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
-        if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
-        process['training_folder'] = output_dir
+        if 'config' in config and 'process' in config['config']:
+            for process in config['config']['process']:
+                if 'model' in process:
+                    process['model']['name_or_path'] = model_path
+                    if 'training_folder' in process:
+                        output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
+                        if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
+                        process['training_folder'] = output_dir
+                
+                if 'datasets' in process:
+                    for dataset in process['datasets']:
+                        dataset['folder_path'] = train_data_dir
+
+                if trigger_word:
+                    process['trigger_word'] = trigger_word
         
-        for dataset in process['datasets']:
-            dataset['folder_path'] = train_data_dir
-
-        if 'adapter' in process:
-            process['adapter']['rank'] = net_dim
-            process['adapter']['alpha'] = net_alpha
-        
-        if 'network' in process:
-            process['network']['linear'] = net_dim
-            process['network']['linear_alpha'] = net_alpha
-
-        # Apply Overrides to YAML
-        if 'train' not in process: process['train'] = {}
-        # Ensure model_name points to local path to prevent HF lookup failures
-        process['train']['model_name'] = model_path
-        
-        # Helper to calculate steps based on epochs for AI-Toolkit
-        def calculate_steps(epochs):
-            batch_size = process.get('train', {}).get('batch_size', 1)
-            dataset_size = count_images_in_directory(train_data_dir)
-            if dataset_size == 0: return epochs # Fallback
-            return int(epochs * (dataset_size / batch_size))
-
-        # Priority 1: Autoepoch
-        if size_config:
-            for key, value in size_config.items():
-                if key == "max_train_epochs": 
-                    process['train']['steps'] = calculate_steps(value)
-                elif key == "optimizer_type": 
-                    process['train']['optimizer'] = value
-                else: 
-                    process['train'][key] = value
-
-        # Priority 2: LRS (Superior)
-        if lrs_settings:
-            for key, value in lrs_settings.items():
-                if key in ["unet_lr", "text_encoder_lr", "learning_rate"]: 
-                    process['train']['lr'] = value
-                elif key in ["optimizer_type", "optimizer"]: 
-                    process['train']['optimizer'] = value
-                elif key in ["max_train_epochs", "steps"]: 
-                    calculated_val = calculate_steps(value) if key == "max_train_epochs" else value
-                    process['train']['steps'] = calculated_val
-                elif key == "optimizer_args" and isinstance(value, list):
-                    # CONVERSION FIX: List["k=v"] -> Dict{"k": v} for AI-Toolkit
-                    opt_params = {}
-                    for item in value:
-                        if "=" in item:
-                            k, v = item.split("=", 1)
-                            # Simple type inference
-                            if v.lower() == "true": v = True
-                            elif v.lower() == "false": v = False
-                            else:
-                                try: v = float(v) if "." in v else int(v)
-                                except ValueError: pass
-                            opt_params[k.strip()] = v
-                    process['train']['optimizer_params'] = opt_params
-                else: 
-                    process['train'][key] = value
-
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.yaml")
         save_config(config, config_path)
+        print(f"Created ai-toolkit config at {config_path}", flush=True)
         return config_path
     else:
         with open(config_template_path, "r") as file:
