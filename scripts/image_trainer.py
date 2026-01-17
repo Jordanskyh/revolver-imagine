@@ -535,7 +535,7 @@ def run_training(model_type, config_path):
         if model_type == "flux":
             training_command = [
                 "python3",
-                f"/app/sd-scripts/{model_type}_train_network.py",
+                f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path,
                 "--disable_mmap_load_safetensors"
             ]
