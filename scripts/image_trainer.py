@@ -396,33 +396,34 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing
+        # FLUX Component Auto-Pathing (Aggressive Autodiscovery)
         if model_type == "flux":
-            base_model_dir = "/cache/models"
-            # Auto-find ae
-            ae_path = os.path.join(os.path.dirname(model_path), "ae.safetensors")
-            if os.path.exists(ae_path):
-                config['model_arguments']['ae'] = ae_path
+            def find_file(base_dir, pattern, min_size_gb=0):
+                for root, dirs, files in os.walk(base_dir):
+                    for f in files:
+                        if f.endswith(".safetensors") and pattern in f.lower():
+                            path = os.path.join(root, f)
+                            if os.path.getsize(path) > (min_size_gb * 1024 * 1024 * 1024):
+                                return path
+                return None
+
+            base_models = "/cache/models"
             
-            # Auto-find clip_l
-            clip_l_candidates = [
-                os.path.join(base_model_dir, "clip-vit-large-patch14/model.safetensors"),
-                "/app/models/clip-vit-large-patch14/model.safetensors"
-            ]
-            for p in clip_l_candidates:
-                if os.path.exists(p):
-                    config['model_arguments']['clip_l'] = p
-                    break
+            # 1. Find AE (AutoEncoder) - usually small (~300MB)
+            ae_path = find_file(os.path.dirname(model_path), "ae") or find_file(base_models, "ae")
+            if ae_path: config['model_arguments']['ae'] = ae_path
             
-            # Auto-find t5xxl
-            t5_candidates = [
-                os.path.join(base_model_dir, "t5-v1_1-xxl/model-00001-of-00002.safetensors"),
-                "/app/models/t5-v1_1-xxl/model-00001-of-00002.safetensors"
-            ]
-            for p in t5_candidates:
-                if os.path.exists(p):
-                    config['model_arguments']['t5xxl'] = p
-                    break
+            # 2. Find CLIP-L - usually ~200MB - 1GB
+            clip_l_path = find_file(base_models, "clip") or find_file(base_models, "model")
+            if clip_l_path: config['model_arguments']['clip_l'] = clip_l_path
+            
+            # 3. Find T5XXL - BIG file (>9GB)
+            # We look for the part-00001 or large file containing t5
+            t5_path = find_file(base_models, "t5", min_size_gb=4)
+            if t5_path: config['model_arguments']['t5xxl'] = t5_path
+
+            # Log discovered paths for debugging
+            print(f"🔍 FLUX AUTODISCOVERY:\n   AE: {config['model_arguments'].get('ae')}\n   CLIP: {config['model_arguments'].get('clip_l')}\n   T5: {config['model_arguments'].get('t5xxl')}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
