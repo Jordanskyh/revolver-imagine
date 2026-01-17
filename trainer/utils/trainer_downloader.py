@@ -176,16 +176,20 @@ async def main():
             )
             print(f"Qwen-Image adapter downloaded to: {qwen_adapter_path}", flush=True)
         
-        print("Downloading clip models (Tokenizers & Vision Encoders)...", flush=True)
+        print("Downloading necessary CLIP/T5 models for offline mode...", flush=True)
+        # Always download basic CLIP for general compatibility
         snapshot_download(repo_id="openai/clip-vit-large-patch14", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
-        snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
-        snapshot_download(
-            repo_id="google/t5-v1_1-xxl",
-            repo_type="model",
-            cache_dir=cst.HUGGINGFACE_CACHE_PATH,
-            local_dir_use_symlinks=False,
-            allow_patterns=["tokenizer_config.json", "spiece.model", "special_tokens_map.json", "config.json"],
-        )
+        
+        if args.model_type == ImageModelType.FLUX.value:
+            print("Downloading Flux-specific heavy models (CLIP-bigG & T5)...", flush=True)
+            snapshot_download(repo_id="laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", cache_dir=cst.HUGGINGFACE_CACHE_PATH, local_dir_use_symlinks=False)
+            snapshot_download(
+                repo_id="google/t5-v1_1-xxl",
+                repo_type="model",
+                cache_dir=cst.HUGGINGFACE_CACHE_PATH,
+                local_dir_use_symlinks=False,
+                allow_patterns=["tokenizer_config.json", "spiece.model", "special_tokens_map.json", "config.json"],
+            )
     else:
         dataset_path, _ = await download_text_dataset(args.task_id, args.dataset, args.file_format, dataset_dir)
         model_path = await download_axolotl_base_model(args.model, model_dir)
