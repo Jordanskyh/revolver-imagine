@@ -396,34 +396,43 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
 
         config['model_arguments']['pretrained_model_name_or_path'] = model_path
         
-        # FLUX Component Auto-Pathing (Aggressive Autodiscovery)
+        # FLUX Component Auto-Pathing (Intelligent Autodiscovery)
         if model_type == "flux":
-            def find_file(base_dir, pattern, min_size_gb=0):
+            def find_file(base_dir, pattern, min_gb=0, max_gb=100, preferred_dir=None):
+                matches = []
                 for root, dirs, files in os.walk(base_dir):
                     for f in files:
                         if f.endswith(".safetensors") and pattern in f.lower():
                             path = os.path.join(root, f)
-                            if os.path.getsize(path) > (min_size_gb * 1024 * 1024 * 1024):
-                                return path
-                return None
+                            size_gb = os.path.getsize(path) / (1024**3)
+                            if min_gb <= size_gb <= max_gb:
+                                # Priority 1: Match preferred directory string
+                                if preferred_dir and preferred_dir in root.lower():
+                                    return path
+                                matches.append(path)
+                
+                # If no preferred dir match, return first valid size match
+                return matches[0] if matches else None
 
             base_models = "/cache/models"
             
-            # 1. Find AE (AutoEncoder) - usually small (~300MB)
-            ae_path = find_file(os.path.dirname(model_path), "ae") or find_file(base_models, "ae")
+            # 1. Find AE (AutoEncoder) - (~300MB)
+            ae_path = find_file(os.path.dirname(model_path), "ae", max_gb=0.5) or find_file(base_models, "ae", max_gb=0.5)
             if ae_path: config['model_arguments']['ae'] = ae_path
             
-            # 2. Find CLIP-L - usually ~200MB - 1GB
-            clip_l_path = find_file(base_models, "clip") or find_file(base_models, "model")
+            # 2. Find CLIP-L - (Must be < 1GB, usually ~300MB-700MB)
+            # This avoids picking up SDXL's BigG Text Encoder (1.3GB+)
+            clip_l_path = find_file(base_models, "model", min_gb=0.1, max_gb=0.8, preferred_dir="clip-vit-large-patch14")
+            if not clip_l_path:
+                clip_l_path = find_file(base_models, "clip", min_gb=0.1, max_gb=0.8)
             if clip_l_path: config['model_arguments']['clip_l'] = clip_l_path
             
             # 3. Find T5XXL - BIG file (>9GB)
-            # We look for the part-00001 or large file containing t5
-            t5_path = find_file(base_models, "t5", min_size_gb=4)
+            t5_path = find_file(base_models, "t5", min_gb=4.0) or find_file(base_models, "model", min_gb=4.0)
             if t5_path: config['model_arguments']['t5xxl'] = t5_path
 
             # Log discovered paths for debugging
-            print(f"🔍 FLUX AUTODISCOVERY:\n   AE: {config['model_arguments'].get('ae')}\n   CLIP: {config['model_arguments'].get('clip_l')}\n   T5: {config['model_arguments'].get('t5xxl')}", flush=True)
+            print(f"🔍 FLUX INTELLIGENT DISCOVERY:\n   AE    : {config['model_arguments'].get('ae')}\n   CLIP-L: {config['model_arguments'].get('clip_l')}\n   T5-XXL: {config['model_arguments'].get('t5xxl')}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
