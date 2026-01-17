@@ -504,9 +504,9 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             save_config_toml(config, config_path)
             print(f"Created config at {config_path}", flush=True)
             return config_path
-    except Exception as e:
-        print(f"Error during create_config: {e}")
-        return None
+        except Exception as e:
+            print(f"Error during create_config: {e}")
+            return None
 
 def run_training(model_type, config_path):
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
