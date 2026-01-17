@@ -159,20 +159,20 @@ async def main():
         model_path = await download_base_model(args.model, model_dir, args.model_type)
 
         if args.model_type == ImageModelType.Z_IMAGE.value:
-            print("Downloading Z-Image adapter into model dir...", flush=True)
+            print("Downloading Z-Image adapter...", flush=True)
             zimage_adapter_path = await download_adapter(
                 repo_id="ostris/zimage_turbo_training_adapter",
                 filename="zimage_turbo_training_adapter_v2.safetensors",
-                adapters_dir=model_path
+                adapters_dir=adapters_dir
             )
             print(f"Z-Image adapter downloaded to: {zimage_adapter_path}", flush=True)
             
         elif args.model_type == ImageModelType.QWEN_IMAGE.value:
-            print("Downloading Qwen-Image adapter into model dir...", flush=True)
+            print("Downloading Qwen-Image adapter...", flush=True)
             qwen_adapter_path = await download_adapter(
                 repo_id="ostris/accuracy_recovery_adapters",
                 filename="qwen_image_torchao_uint3.safetensors",
-                adapters_dir=model_path
+                adapters_dir=adapters_dir
             )
             print(f"Qwen-Image adapter downloaded to: {qwen_adapter_path}", flush=True)
         
