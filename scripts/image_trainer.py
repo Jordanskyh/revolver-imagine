@@ -326,6 +326,12 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             for process in config['config']['process']:
                 if 'model' in process:
                     process['model']['name_or_path'] = model_path
+                    # Dynamically find assistant lora in model dir
+                    if model_type == "z-image":
+                        process['model']['assistant_lora_path'] = os.path.join(model_path, "zimage_turbo_training_adapter_v2.safetensors")
+                    elif model_type == "qwen-image":
+                        process['model']['qtype_te'] = "qfloat8" # Ensure consistency
+                        
                     if 'training_folder' in process:
                         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
                         if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
