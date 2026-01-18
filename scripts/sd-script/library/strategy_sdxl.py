@@ -14,9 +14,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# HARDCODED PATHS FOR OFFLINE VALIDATOR ENVIRONMENT
+TOKENIZER1_PATH = "/cache/hf_cache/hub/models--openai--clip-vit-large-patch14"
+TOKENIZER2_PATH = "/cache/hf_cache/hub/models--laion--CLIP-ViT-bigG-14-laion2B-39B-b160k"
 
-TOKENIZER1_PATH = "openai/clip-vit-large-patch14"
-TOKENIZER2_PATH = "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k"
 
 
 class SdxlTokenizeStrategy(TokenizeStrategy):
