@@ -25,8 +25,8 @@ CONTAINER_EVAL_RESULTS_PATH = "/aplp/evaluation_results.json"
 
 CONFIG_DIR = "core/config/"
 OUTPUT_DIR = "core/outputs/"
-CACHE_DIR = "~/.cache/huggingface"
-CACHE_DIR_HUB = os.path.expanduser("~/.cache/huggingface/hub")
+CACHE_DIR = "/cache/hf_cache"
+CACHE_DIR_HUB = "/cache/hf_cache/hub"
 GRPO_MINER_OUTPUT_DIR = "/root/.cache/huggingface/hub/trained_repo"
 MINER_CONTAINER_SCRIPTS_PATH = "/app/scripts"
 DIFFUSION_DATASET_DIR = "core/dataset/images"

@@ -325,12 +325,20 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         if 'config' in config and 'process' in config['config']:
             for process in config['config']['process']:
                 if 'model' in process:
-                    process['model']['name_or_path'] = model_path
+                    # AI-Toolkit usually expects a directory containing the model or a repo ID
+                    # If it's a path to a .safetensors file, get the directory
+                    if model_path.endswith(".safetensors"):
+                        process['model']['name_or_path'] = os.path.dirname(model_path)
+                    else:
+                        process['model']['name_or_path'] = model_path
+
                     # Follow Yaya-Simplified Logic
                     if model_type == ImageModelType.Z_IMAGE.value:
                         process['model']['assistant_lora_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "zimage_turbo_training_adapter_v2.safetensors")
                     elif model_type == ImageModelType.QWEN_IMAGE.value:
                         process['model']['qtype_te'] = "qfloat8"
+                        # Ensure CLIP Vision is also looked up locally
+                        process['model']['clip_vision_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "hub/models--openai--clip-vit-large-patch14/snapshots")
                         
                     if 'training_folder' in process:
                         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
@@ -565,13 +573,20 @@ def run_training(model_type, config_path):
             ]
     
     try:
+        env = os.environ.copy()
+        env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
+        env["TRANSFORMERS_OFFLINE"] = "1"
+        env["HF_DATASETS_OFFLINE"] = "1"
+        env["PYTHONUNBUFFERED"] = "1"
+
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
         process = subprocess.Popen(
             training_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1
+            bufsize=1,
+            env=env
         )
 
         for line in process.stdout:
