@@ -542,17 +542,6 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     else:
                         config[target] = value # Flat injection
                 else:
-                    # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
-                    config[key] = value
-        
-        # --- OFFLINE COMPATIBILITY FIX (FROM IMAGE-YAYA ANALYSIS) ---
-        if model_type == "sdxl":
-            # Force max_token_length to None (75 tokens) to avoid CLIP loading error in offline environment
-            # This is exactly how image-yaya handles SDXL offline.
-            config["max_token_length"] = None
-            if "training_arguments" in config:
-                config["training_arguments"]["max_token_length"] = None
-
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
         save_config_toml(config, config_path)
         print(f"Created config at {config_path}", flush=True)
@@ -592,7 +581,8 @@ def run_training(model_type, config_path):
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path
+                "--config_file", config_path,
+                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
             ]
         else:
             # Generic fallback for other models
@@ -605,9 +595,9 @@ def run_training(model_type, config_path):
     
     try:
         env = os.environ.copy()
-        # env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
-        # env["TRANSFORMERS_OFFLINE"] = "1"
-        # env["HF_DATASETS_OFFLINE"] = "1"
+        env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
+        env["TRANSFORMERS_OFFLINE"] = "1"
+        env["HF_DATASETS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
