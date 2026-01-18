@@ -47,7 +47,7 @@ gradient_accumulation_steps = 1
 train_batch_size = 4
 loss_type = "l2"
 xformers = true
-max_token_length = 125
+max_token_length = 75
 max_train_epochs = 25
 save_every_n_epochs = 5
 
