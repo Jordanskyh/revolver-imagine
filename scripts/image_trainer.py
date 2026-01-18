@@ -360,7 +360,17 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 
                 if 'datasets' in process:
                     for dataset in process['datasets']:
-                        dataset['folder_path'] = train_data_dir
+                        # AI-Toolkit expects images directly in folder_path.
+                        # prepare_dataset creates a subfolder like "1_lora style"
+                        rep = cst.DIFFUSION_SDXL_REPEATS if args.model_type == ImageModelType.SDXL.value else cst.DIFFUSION_FLUX_REPEATS
+                        sub_pref = f"{rep}_"
+                        dataset_path = train_data_dir
+                        if os.path.exists(train_data_dir):
+                            for d in os.listdir(train_data_dir):
+                                if d.startswith(sub_pref) and os.path.isdir(os.path.join(train_data_dir, d)):
+                                    dataset_path = os.path.join(train_data_dir, d)
+                                    break
+                        dataset['folder_path'] = dataset_path
 
                 # --- ADVANCED AUTO-SCALING (JORDANSKY TUNING) ---
                 if 'train' not in process: process['train'] = {}
@@ -581,7 +591,7 @@ def run_training(model_type, config_path):
             training_command = [
                 "accelerate", "launch",
                 "--mixed_precision", "bf16",
-                f"/app/sd-scripts/{model_type}_train_network.py",
+                f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path
             ]
     
