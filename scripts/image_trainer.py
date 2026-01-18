@@ -572,7 +572,7 @@ def run_training(model_type, config_path):
                 "python3",
                 f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--disable_mmap_load_safetensors"
             ]
         elif model_type == "sdxl":
             training_command = [
@@ -584,8 +584,7 @@ def run_training(model_type, config_path):
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--config_file", config_path
             ]
         else:
             # Generic fallback for other models
@@ -593,8 +592,7 @@ def run_training(model_type, config_path):
                 "accelerate", "launch",
                 "--mixed_precision", "bf16",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--config_file", config_path
             ]
     
     try:
