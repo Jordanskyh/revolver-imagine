@@ -585,7 +585,8 @@ def run_training(model_type, config_path):
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH,
+                "--max_token_length", "75"
             ]
         else:
             # Generic fallback for other models
