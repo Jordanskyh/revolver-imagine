@@ -9,6 +9,8 @@ config:
       type: lora
       linear: 32
       linear_alpha: 32
+      conv: 16
+      conv_alpha: 16
     save:
       dtype: bf16
       save_every: 250
@@ -22,25 +24,24 @@ config:
       is_reg: false
     train:
       batch_size: 1
-      steps: 3000
+      steps: 2000
       lr: 0.0001
       optimizer: adamw8bit
       gradient_checkpointing: true
       noise_scheduler: flowmatch
       timestep_type: weighted
       dtype: bf16
-      cache_text_embeddings: true
-      train_unet: true
-      train_text_encoder: false
+      ema_config:
+        use_ema: true
+        ema_decay: 0.99
     model:
       name_or_path: /cache/models
-      arch: qwen_image
+      arch: zimage:turbo
       quantize: true
-      # DYNAMIC_FIX: Point to local quantized file and use local config to prevent HF lookups
-      qtype: uint3
+      qtype: qfloat8
       quantize_te: true
       qtype_te: qfloat8
-      low_vram: true
+      assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors
 meta:
-  name: qwen_image_lora_yaya_scheme
-  version: '2.5'
+  name: zimage_lora_yaya_scheme
+  version: '2.1'

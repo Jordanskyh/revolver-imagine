@@ -176,15 +176,28 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     is_style = "style" in model_name.lower() or "style" in task_id.lower()
     train_data_dir = os.path.join(train_cst.IMAGE_CONTAINER_IMAGES_PATH, task_id)
     
-    # Try specific template (e.g., base_diffusion_flux_person.toml)
-    config_template_path = os.path.join(script_dir, "core", "config", f"base_diffusion_{model_type}_{'style' if is_style else 'person'}.toml")
+    # --- UNIFIED CONFIG RESOLUTION (PERSIMPLE) ---
+    config_dir = os.path.join(script_dir, "core", "config")
+    task_type = "style" if is_style else "person"
     
-    # Fallback to base template (e.g., base_diffusion_flux.toml)
-    if not os.path.exists(config_template_path):
-        config_template_path = os.path.join(script_dir, "core", "config", f"base_diffusion_{model_type}.toml")
-
-    if model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]:
-        config_template_path = os.path.join(script_dir, "core", "config", f"base_{model_type}.yaml")
+    # Priority: Task-specific > Base, TOML > YAML
+    potential_templates = [
+        f"base_diffusion_{model_type}_{task_type}.toml",
+        f"base_diffusion_{model_type}_{task_type}.yaml",
+        f"base_diffusion_{model_type}.toml",
+        f"base_diffusion_{model_type}.yaml",
+        f"base_{model_type}.yaml" # Legacy fallback
+    ]
+    
+    config_template_path = None
+    for template_name in potential_templates:
+        found_path = os.path.join(config_dir, template_name)
+        if os.path.exists(found_path):
+            config_template_path = found_path
+            break
+    
+    if not config_template_path:
+        raise FileNotFoundError(f"Could not find a valid config template for {model_type} in {config_dir}")
 
     # --- LAYER 2: DICTIONARY & MAPPING (CHAMPION LOGIC) ---
     network_config_person = {
@@ -332,32 +345,13 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     else:
                         process['model']['name_or_path'] = model_path
 
-                    # --- SMART OFFLINE CLIP RESOLVER ---
-                    def get_local_snapshot_path(repo_id):
-                        base_hub = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "hub")
-                        repo_folder = f"models--{repo_id.replace('/', '--')}"
-                        snapshots_path = os.path.join(base_hub, repo_folder, "snapshots")
-                        if os.path.exists(snapshots_path):
-                            snapshots = os.listdir(snapshots_path)
-                            if snapshots:
-                                # Return the first/latest snapshot directory
-                                return os.path.abspath(os.path.join(snapshots_path, snapshots[0]))
-                        return None
-
-                    clip_path = get_local_snapshot_path("openai/clip-vit-large-patch14")
-                    
-                    # Follow Yaya-Simplified Logic
+                    # Follow Yaya-Simplified Logic (Strict Paths)
                     if model_type == ImageModelType.Z_IMAGE.value:
                         process['model']['assistant_lora_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "zimage_turbo_training_adapter_v2.safetensors")
-                        if clip_path:
-                            print(f"[OFFLINE FIX] Injecting local CLIP path for Z-Image: {clip_path}", flush=True)
-                            process['model']['clip_vision_path'] = clip_path
                         
                     elif model_type == ImageModelType.QWEN_IMAGE.value:
-                        process['model']['qtype_te'] = "qfloat8"
-                        if clip_path:
-                            print(f"[OFFLINE FIX] Injecting local CLIP path for Qwen: {clip_path}", flush=True)
-                            process['model']['clip_vision_path'] = clip_path
+                        # Qwen quantization path is handled via base template or LRS
+                        pass
                         
                     if 'training_folder' in process:
                         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
