@@ -597,9 +597,9 @@ def run_training(model_type, config_path):
     
     try:
         env = os.environ.copy()
-        env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
-        env["TRANSFORMERS_OFFLINE"] = "1"
-        env["HF_DATASETS_OFFLINE"] = "1"
+        # env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
+        # env["TRANSFORMERS_OFFLINE"] = "1"
+        # env["HF_DATASETS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
