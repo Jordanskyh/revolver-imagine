@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 
 """
 Jordansky
@@ -138,7 +138,7 @@ def get_config_for_model(lrs_config: dict, model_name: str, dataset_size: int = 
             # Check if model_config has size-specific settings
             if size_category in model_config:
                 size_specific_config = model_config.get(size_category, {})
-                # Merge: default → model_config (non-size keys) → size_specific
+                # Merge: default ÔåÆ model_config (non-size keys) ÔåÆ size_specific
                 base_model_config = {k: v for k, v in model_config.items() if k not in ["small", "medium", "large"]}
                 merged = merge_model_config(default_config, base_model_config)
                 return merge_model_config(merged, size_specific_config)
@@ -313,7 +313,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     net_alpha = model_params["network_alpha"]
     net_args = model_params["network_args"]
 
-    print(f"⚡ JORDANSKY LAYER 2: Model '{model_name}' Rank {net_dim}", flush=True)
+    print(f"ÔÜí JORDANSKY LAYER 2: Model '{model_name}' Rank {net_dim}", flush=True)
 
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
     
@@ -360,17 +360,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 
                 if 'datasets' in process:
                     for dataset in process['datasets']:
-                        # AI-Toolkit expects images directly in folder_path.
-                        # prepare_dataset creates a subfolder like "1_lora style"
-                        rep = cst.DIFFUSION_SDXL_REPEATS if args.model_type == ImageModelType.SDXL.value else cst.DIFFUSION_FLUX_REPEATS
-                        sub_pref = f"{rep}_"
-                        dataset_path = train_data_dir
-                        if os.path.exists(train_data_dir):
-                            for d in os.listdir(train_data_dir):
-                                if d.startswith(sub_pref) and os.path.isdir(os.path.join(train_data_dir, d)):
-                                    dataset_path = os.path.join(train_data_dir, d)
-                                    break
-                        dataset['folder_path'] = dataset_path
+                        dataset['folder_path'] = train_data_dir
 
                 # --- ADVANCED AUTO-SCALING (JORDANSKY TUNING) ---
                 if 'train' not in process: process['train'] = {}
@@ -498,10 +488,10 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
             final_t5 = config.get('t5xxl')
 
             if not (final_ae and final_clip and final_t5 and os.path.exists(final_clip)):
-                print("❌ [GOD MODE FAILURE] Missing vital FLUX components!", flush=True)
+                print("ÔØî [GOD MODE FAILURE] Missing vital FLUX components!", flush=True)
                 print(f"   Current Resolution: AE={final_ae}, CLIP={final_clip}, T5={final_t5}", flush=True)
 
-            print(f"✅ [ASSET SYNC] AE: {final_ae}, CLIP: {final_clip}, T5: {final_t5}", flush=True)
+            print(f"Ô£à [ASSET SYNC] AE: {final_ae}, CLIP: {final_clip}, T5: {final_t5}", flush=True)
 
         config['train_data_dir'] = train_data_dir
         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name)
@@ -572,7 +562,7 @@ def run_training(model_type, config_path):
                 "python3",
                 f"/app/sd-script/{model_type}_train_network.py",
                 "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--disable_mmap_load_safetensors"
             ]
         elif model_type == "sdxl":
             training_command = [
@@ -584,17 +574,15 @@ def run_training(model_type, config_path):
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                "--config_file", config_path
             ]
         else:
             # Generic fallback for other models
             training_command = [
                 "accelerate", "launch",
                 "--mixed_precision", "bf16",
-                f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
+                f"/app/sd-scripts/{model_type}_train_network.py",
+                "--config_file", config_path
             ]
     
     try:
@@ -604,7 +592,7 @@ def run_training(model_type, config_path):
         env["HF_DATASETS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
-        print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
+        print(f"­ƒÜÇ Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
         process = subprocess.Popen(
             training_command,
             stdout=subprocess.PIPE,
