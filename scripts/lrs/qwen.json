@@ -1,43 +1,43 @@
 ﻿{
-  "default": {
-    "steps": 3000,
-    "lr": 0.0001,
-    "optimizer": "adamw8bit"
-  },
-  "data": {
-    "65f7526e4b4dfff9cfd1a961f40e75649d34f085c246d35d0e025bb235bc635d": {
-      "model_name": "gradients-io-tournaments/Qwen-Image",
-      "small": {
-        "max_train_epochs": 300,
-        "lr": 0.0002,
-        "weight_decay": 0.01
-      },
-      "medium": {
-        "max_train_epochs": 120,
-        "lr": 0.0001
-      },
-      "large": {
-        "max_train_epochs": 60,
-        "lr": 0.00005,
-        "weight_decay": 0.1
-      }
+    "default": {
+        "steps": 3000,
+        "lr": 0.0001,
+        "optimizer": "adamw8bit"
     },
-    "f5eea20a2dbc9e3de97243d3ff8935c349fbb4637e4378e43ed2f57ba379cbb7": {
-      "model_name": "gradients-io-tournaments/Qwen-Image-Jib-Mix",
-      "small": {
-        "max_train_epochs": 300,
-        "lr": 0.0002,
-        "weight_decay": 0.01
-      },
-      "medium": {
-        "max_train_epochs": 120,
-        "lr": 0.0001
-      },
-      "large": {
-        "max_train_epochs": 60,
-        "lr": 0.00005,
-        "weight_decay": 0.1
-      }
+    "data": {
+        "65f7526e4b4dfff9cfd1a961f40e75649d34f085c246d35d0e025bb235bc635d": {
+            "model_name": "gradients-io-tournaments/Qwen-Image",
+            "small": {
+                "max_train_epochs": 300,
+                "lr": 0.0002,
+                "weight_decay": 0.01
+            },
+            "medium": {
+                "max_train_epochs": 100,
+                "lr": 0.0001
+            },
+            "large": {
+                "max_train_epochs": 55,
+                "lr": 0.00005,
+                "weight_decay": 0.1
+            }
+        },
+        "f5eea20a2dbc9e3de97243d3ff8935c349fbb4637e4378e43ed2f57ba379cbb7": {
+            "model_name": "gradients-io-tournaments/Qwen-Image-Jib-Mix",
+            "small": {
+                "max_train_epochs": 300,
+                "lr": 0.0002,
+                "weight_decay": 0.01
+            },
+            "medium": {
+                "max_train_epochs": 100,
+                "lr": 0.0001
+            },
+            "large": {
+                "max_train_epochs": 55,
+                "lr": 0.00005,
+                "weight_decay": 0.1
+            }
+        }
     }
-  }
 }

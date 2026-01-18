@@ -1,27 +1,27 @@
 ﻿{
-  "default": {
-    "steps": 2000,
-    "lr": 0.0001,
-    "optimizer": "adamw8bit"
-  },
-  "data": {
-    "3a5e401ab45c3f7e89739c5b204709d0a1418a5cff5888ce6ec97e7abe09ce0a": {
-      "model_name": "zimage_turbo",
-      "small": {
-        "max_train_epochs": 200,
-        "lr": 0.0002,
-        "noise_offset": 0.05
-      },
-      "medium": {
-        "max_train_epochs": 80,
-        "lr": 0.0001
-      },
-      "large": {
-        "max_train_epochs": 40,
-        "lr": 0.00008,
-        "network_dim": 64,
-        "network_alpha": 32
-      }
+    "default": {
+        "steps": 2000,
+        "lr": 0.0001,
+        "optimizer": "adamw8bit"
+    },
+    "data": {
+        "3a5e401ab45c3f7e89739c5b204709d0a1418a5cff5888ce6ec97e7abe09ce0a": {
+            "model_name": "zimage_turbo",
+            "small": {
+                "max_train_epochs": 200,
+                "lr": 0.0002,
+                "noise_offset": 0.05
+            },
+            "medium": {
+                "max_train_epochs": 70,
+                "lr": 0.0001
+            },
+            "large": {
+                "max_train_epochs": 40,
+                "lr": 0.00008,
+                "network_dim": 64,
+                "network_alpha": 32
+            }
+        }
     }
-  }
 }

@@ -1,7 +1,7 @@
 ﻿{
     "default": {
         "train_batch_size": 1,
-        "max_train_epochs": 80,
+        "max_train_epochs": 60,
         "save_every_n_epochs": 20
     },
     "size_ranges": [
@@ -17,13 +17,13 @@
             "min": 16,
             "max": 35,
             "config": {
-                "max_train_epochs": 80,
+                "max_train_epochs": 70,
                 "save_every_n_epochs": 20
             }
         },
         {
             "min": 36,
-            "max": 65,
+            "max": 100,
             "config": {
                 "max_train_epochs": 40,
                 "save_every_n_epochs": 10

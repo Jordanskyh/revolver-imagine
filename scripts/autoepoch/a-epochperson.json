@@ -1,35 +1,32 @@
-{
+﻿{
     "default": {
         "train_batch_size": 4,
-        "max_train_epochs": 28,
-        "save_every_n_epochs": 4
+        "max_train_epochs": 40,
+        "save_every_n_epochs": 8
     },
     "size_ranges": [
         {
             "min": 1,
             "max": 15,
             "config": {
-                "train_batch_size": 4,
-                "max_train_epochs": 80,
-                "save_every_n_epochs": 40
+                "max_train_epochs": 110,
+                "save_every_n_epochs": 50
             }
         },
         {
             "min": 16,
             "max": 35,
             "config": {
-                "train_batch_size": 4,
-                "max_train_epochs": 50,
-                "save_every_n_epochs": 25
+                "max_train_epochs": 60,
+                "save_every_n_epochs": 20
             }
         },
         {
             "min": 36,
-            "max": 60,
+            "max": 100,
             "config": {
-                "train_batch_size": 4,
-                "max_train_epochs": 25,
-                "save_every_n_epochs": 5
+                "max_train_epochs": 35,
+                "save_every_n_epochs": 10
             }
         }
     ]
