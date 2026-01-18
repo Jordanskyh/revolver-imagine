@@ -332,13 +332,32 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     else:
                         process['model']['name_or_path'] = model_path
 
+                    # --- SMART OFFLINE CLIP RESOLVER ---
+                    def get_local_snapshot_path(repo_id):
+                        base_hub = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "hub")
+                        repo_folder = f"models--{repo_id.replace('/', '--')}"
+                        snapshots_path = os.path.join(base_hub, repo_folder, "snapshots")
+                        if os.path.exists(snapshots_path):
+                            snapshots = os.listdir(snapshots_path)
+                            if snapshots:
+                                # Return the first/latest snapshot directory
+                                return os.path.abspath(os.path.join(snapshots_path, snapshots[0]))
+                        return None
+
+                    clip_path = get_local_snapshot_path("openai/clip-vit-large-patch14")
+                    
                     # Follow Yaya-Simplified Logic
                     if model_type == ImageModelType.Z_IMAGE.value:
                         process['model']['assistant_lora_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "zimage_turbo_training_adapter_v2.safetensors")
+                        if clip_path:
+                            print(f"[OFFLINE FIX] Injecting local CLIP path for Z-Image: {clip_path}", flush=True)
+                            process['model']['clip_vision_path'] = clip_path
+                        
                     elif model_type == ImageModelType.QWEN_IMAGE.value:
                         process['model']['qtype_te'] = "qfloat8"
-                        # Ensure CLIP Vision is also looked up locally
-                        process['model']['clip_vision_path'] = os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "hub/models--openai--clip-vit-large-patch14/snapshots")
+                        if clip_path:
+                            print(f"[OFFLINE FIX] Injecting local CLIP path for Qwen: {clip_path}", flush=True)
+                            process['model']['clip_vision_path'] = clip_path
                         
                     if 'training_folder' in process:
                         output_dir = train_paths.get_checkpoints_output_path(task_id, expected_repo_name or "output")
