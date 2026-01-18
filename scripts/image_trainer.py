@@ -542,6 +542,9 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     else:
                         config[target] = value # Flat injection
                 else:
+                    # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
+                    config[key] = value
+
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
         save_config_toml(config, config_path)
         print(f"Created config at {config_path}", flush=True)
