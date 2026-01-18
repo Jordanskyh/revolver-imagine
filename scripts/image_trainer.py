@@ -711,6 +711,9 @@ def hash_model(model: str) -> str:
     return hashed 
 
 async def main():
+    print("--------------------------------------------------", flush=True)
+    print("🚀 EMPIRE STANDALONE TRAINER V2.0 (OFFLINE PATCHED)", flush=True)
+    print("--------------------------------------------------", flush=True)
     print("---STARTING IMAGE TRAINING SCRIPT---", flush=True)
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Image Model Training Script")

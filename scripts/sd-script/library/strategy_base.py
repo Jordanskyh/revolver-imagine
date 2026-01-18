@@ -60,6 +60,16 @@ class TokenizeStrategy:
             if os.path.exists(local_tokenizer_path):
                 logger.info(f"load tokenizer from cache: {local_tokenizer_path}")
                 tokenizer = model_class.from_pretrained(local_tokenizer_path)  # same for v1 and v2
+            
+            # --- OFFLINE HUB DISCOVERY (EMPIRE FIX) ---
+            if tokenizer is None:
+                hub_models_path = os.path.join(tokenizer_cache_dir, "hub", f"models--{model_id.replace('/', '--')}", "snapshots")
+                if os.path.exists(hub_models_path):
+                    snapshots = os.listdir(hub_models_path)
+                    if snapshots:
+                        snapshot_path = os.path.join(hub_models_path, snapshots[0])
+                        logger.info(f"🔄 [EMPIRE PATCH] Found tokenizer in Hub snapshot: {snapshot_path}")
+                        tokenizer = model_class.from_pretrained(snapshot_path)
 
         if tokenizer is None:
             tokenizer = model_class.from_pretrained(model_id, subfolder=subfolder)
