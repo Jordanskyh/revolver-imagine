@@ -559,35 +559,50 @@ def ensure_offline_tokenizers():
         cache_dir = train_cst.HUGGINGFACE_CACHE_PATH
         hub_dir = os.path.join(cache_dir, "hub")
         
-        # Target paths expected by sd-scripts when using --tokenizer_cache_dir
-        t1_target = os.path.join(cache_dir, "openai_clip-vit-large-patch14")
-        t2_target = os.path.join(cache_dir, "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k")
+        # Target paths expected by sd-scripts
+        targets = [
+            ("openai/clip-vit-large-patch14", os.path.join(cache_dir, "openai_clip-vit-large-patch14")),
+            ("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", os.path.join(cache_dir, "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k"))
+        ]
 
-        if os.path.exists(t1_target) and os.path.exists(t2_target):
-            return
-
-        print("Ô£á [OFFLINE SYNC] Orienting CLIP tokenizers for SDXL Empire Base...", flush=True)
+        print("🚀 [OFFLINE SYNC] Checking CLIP tokenizers for SDXL Empire Base...", flush=True)
         
-        # Search for snapshots in the Hub
-        for model_id, target in [("openai/clip-vit-large-patch14", t1_target), 
-                                 ("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", t2_target)]:
-            if os.path.exists(target): continue
+        for model_id, target in targets:
+            # Check if it's already a valid directory with config
+            if os.path.exists(os.path.join(target, "tokenizer_config.json")):
+                print(f"   ✅ {model_id} already exists and is valid.", flush=True)
+                continue
             
+            # Clean up broken links/folders
+            if os.path.exists(target): 
+                if os.path.islink(target): os.unlink(target)
+                else: shutil.rmtree(target)
+
+            # Look for the source in Hub
             repo_path = os.path.join(hub_dir, f"models--{model_id.replace('/', '--')}")
             snapshot_base = os.path.join(repo_path, "snapshots")
             
-            if os.path.exists(snapshot_base):
-                snapshots = os.listdir(snapshot_base)
-                if snapshots:
-                    src = os.path.join(snapshot_base, snapshots[0])
-                    print(f"   Linking {model_id} -> {target}", flush=True)
-                    try:
-                        os.symlink(src, target)
-                    except:
-                        # Fallback for environments where symlink is restricted
-                        shutil.copytree(src, target, dirs_exist_ok=True)
+            if not os.path.exists(snapshot_base):
+                print(f"   ❌ Source for {model_id} not found in Hub! Downloader might have missed it.", flush=True)
+                continue
+                
+            snapshots = os.listdir(snapshot_base)
+            if not snapshots: continue
+            
+            src = os.path.join(snapshot_base, snapshots[0])
+            print(f"   🔗 Harvesting {model_id} from Hub snapshot...", flush=True)
+            
+            # Use copytree to ensure we have actual files, not symlinks that might break
+            shutil.copytree(src, target, dirs_exist_ok=True)
+            
+            # Verification
+            if os.path.exists(os.path.join(target, "tokenizer_config.json")):
+                print(f"   ✨ Successfully reconstructed {model_id} at {target}", flush=True)
+            else:
+                print(f"   ⚠️ Reconstructed {model_id} but it looks incomplete.", flush=True)
+                
     except Exception as e:
-        print(f"ÔÜá [OFFLINE SYNC WARNING] Could not pre-orient tokenizers: {e}", flush=True)
+        print(f"⚠️ [OFFLINE SYNC ERROR] {e}", flush=True)
 
 def run_training(model_type, config_path):
     if model_type == "sdxl":
