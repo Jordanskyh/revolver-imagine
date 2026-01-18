@@ -544,6 +544,14 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 else:
                     # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
                     config[key] = value
+        
+        # --- OFFLINE COMPATIBILITY FIX (FROM IMAGE-YAYA ANALYSIS) ---
+        if model_type == "sdxl":
+            # Force max_token_length to None (75 tokens) to avoid CLIP loading error in offline environment
+            # This is exactly how image-yaya handles SDXL offline.
+            config["max_token_length"] = None
+            if "training_arguments" in config:
+                config["training_arguments"]["max_token_length"] = None
 
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
         save_config_toml(config, config_path)
