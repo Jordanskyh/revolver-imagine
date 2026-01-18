@@ -1,3 +1,5 @@
+# PROOF OF EMPIRE BASE (QWEN)
+# Derived from image-yaya (Empirical Evidence)
 job: extension
 config:
   name: last
@@ -32,15 +34,18 @@ config:
       cache_text_embeddings: true
       train_unet: true
       train_text_encoder: false
+      ema_config:
+        use_ema: true
+        ema_decay: 0.99
     model:
       name_or_path: /cache/models
       arch: qwen_image
       quantize: true
-      # DYNAMIC_FIX: Point to local quantized file and use local config to prevent HF lookups
+      # Local Path Fix for Offline Compatibility
       qtype: uint3|/cache/hf_cache/qwen_image_torchao_uint3.safetensors
       quantize_te: true
       qtype_te: qfloat8
       low_vram: true
 meta:
-  name: qwen_image_lora_yaya_scheme
-  version: '2.5'
+  name: qwen_image_lora_empire_base
+  version: '1.0'

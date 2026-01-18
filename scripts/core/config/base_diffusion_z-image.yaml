@@ -1,3 +1,5 @@
+# PROOF OF EMPIRE BASE (Z-IMAGE)
+# Derived from image-yaya (Empirical Evidence)
 job: extension
 config:
   name: last
@@ -41,7 +43,8 @@ config:
       qtype: qfloat8
       quantize_te: true
       qtype_te: qfloat8
+      # Local Path Fix for Offline Compatibility
       assistant_lora_path: /cache/hf_cache/zimage_turbo_training_adapter_v2.safetensors
 meta:
-  name: zimage_lora_yaya_scheme
-  version: '2.1'
+  name: zimage_lora_empire_base
+  version: '1.0'

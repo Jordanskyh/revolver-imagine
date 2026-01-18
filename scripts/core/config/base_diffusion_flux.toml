@@ -1,4 +1,5 @@
-## STABLE CONFIG - Basedd on image-yaya (PROVEN TO WORK)
+# PROOF OF EMPIRE BASE (FLUX)
+# Unified scheme from Boss & image-yaya
 
 no_metadata = true
 ae = "/app/flux/ae.safetensors"
@@ -14,7 +15,7 @@ dynamo_backend = "no"
 full_bf16 = true
 gradient_accumulation_steps = 2
 gradient_checkpointing = true
-guidance_scale = 1.0
+guidance_scale = 80.0
 highvram = true
 huber_c = 0.1
 huber_scale = 1
@@ -22,7 +23,7 @@ huber_schedule = "snr"
 loss_type = "l2"
 lr_scheduler = "cosine"
 max_bucket_reso = 2048
-max_data_loader_n_workers = 8
+max_data_loader_n_workers = 0
 max_timestep = 1000
 mem_eff_save = true
 min_bucket_reso = 256
@@ -37,17 +38,19 @@ optimizer_args = ["weight_decay=0.01", "betas=(0.9,0.99)"]
 optimizer_type = "Lion"
 output_dir = "/app/checkpoints"
 output_name = "last"
-pretrained_model_name_or_path = "/cache/models/flux1-dev.safetensors"
+pretrained_model_name_or_path = "/app/flux/unet.safetensors"
 prior_loss_weight = 1
 resolution = "1024,1024"
 save_model_as = "safetensors"
-save_precision = "bf16"
+save_precision = "float"
 seed = 2
 t5xxl = "/app/flux/t5xxl_fp16.safetensors"
 t5xxl_max_token_length = 512
-text_encoder_lr = [ 5e-6, 5e-6 ]
+text_encoder_lr = [ 0.000005, 0.000005 ]
 timestep_sampling = "sigmoid"
 train_batch_size = 4
-unet_lr = 5e-5
+unet_lr = 0.00005
 vae_batch_size = 4
 xformers = true
+max_train_steps = 240
+save_every_n_epochs = 10
