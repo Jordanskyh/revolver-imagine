@@ -605,7 +605,7 @@ def ensure_offline_tokenizers():
 
 def run_training(model_type, config_path):
     # Ensure tokenizers are ready for offline sd-scripts
-    if model_type in ["sdxl", "flux"]:
+    if model_type in ["sdxl", "flux", "z-image"]:
         ensure_offline_tokenizers()
     
     print(f"Starting training with config: {config_path}", flush=True)
@@ -618,6 +618,11 @@ def run_training(model_type, config_path):
             "/app/ai-toolkit/run.py",
             config_path
         ]
+        # AI-Toolkit Offline Guard
+        env = os.environ.copy()
+        env["HF_DATASETS_OFFLINE"] = "1"
+        env["TRANSFORMERS_OFFLINE"] = "1"
+        env["HF_HUB_OFFLINE"] = "1"
     else:
         if model_type == "sdxl":
             training_command = [
@@ -650,6 +655,11 @@ def run_training(model_type, config_path):
         env = os.environ.copy()
         env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
         env["PYTHONUNBUFFERED"] = "1"
+        
+        # --- OFFLINE HUB GUARD (CRITICAL) ---
+        env["HF_DATASETS_OFFLINE"] = "1"
+        env["TRANSFORMERS_OFFLINE"] = "1"
+        env["HF_HUB_OFFLINE"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
         process = subprocess.Popen(
