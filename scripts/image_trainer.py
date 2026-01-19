@@ -539,10 +539,13 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         save_config_toml(config, config_path)
         print(f"Created config at {config_path}", flush=True)
         return config_path
+
 def ensure_offline_tokenizers():
-    """Bridge Hugging Face HUB structure to SD-Scripts FLAT structure."""
+    """Bridge Hugging Face HUB structure to SD-Scripts FLAT structure.
+    Surgically find snapshots and create flat folders for offline loading.
+    """
+    import shutil
     cache_root = train_cst.HUGGINGFACE_CACHE_PATH
-    hub_dir = os.path.join(cache_root, "hub")
     
     # Mapping for SDXL tokenizers
     mapping = {
@@ -550,48 +553,56 @@ def ensure_offline_tokenizers():
         "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k": "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k"
     }
     
-    print(f"🔍 [OFFLINE SYNC] Checking for tokenizers in {hub_dir}...", flush=True)
+    print(f"🔍 [OFFLINE SYNC] Scanning {cache_root} for tokenizers...", flush=True)
     
+    # Check what's actually in there
+    if not os.path.exists(cache_root):
+        print(f"❌ [OFFLINE SYNC] ERROR: Cache root {cache_root} does not exist!", flush=True)
+        return
+
+    # Helper to find the actual snapshot directory recursively
+    def find_snapshot_dir(target_repo):
+        search_slug = target_repo.replace("/", "--")
+        for root, dirs, files in os.walk(cache_root):
+            if search_slug in root and "snapshots" in root:
+                # We are in the snapshots folder, return the first child directory (the hash)
+                if dirs:
+                    return os.path.join(root, dirs[0])
+        return None
+
     for repo_id, flat_name in mapping.items():
         flat_path = os.path.join(cache_root, flat_name)
-        if os.path.exists(flat_path):
-            print(f"✅ [OFFLINE SYNC] {flat_name} already exists.", flush=True)
+        
+        # If already exists and has content, skip
+        if os.path.exists(flat_path) and os.path.exists(os.path.join(flat_path, "config.json")):
+            print(f"✅ [OFFLINE SYNC] {flat_name} already exists and is valid.", flush=True)
             continue
             
-        # Try to find snapshot in HUB structure
-        repo_slug = f"models--{repo_id.replace('/', '--')}"
-        snapshots_dir = os.path.join(hub_dir, repo_slug, "snapshots")
+        print(f"🕵️ [OFFLINE SYNC] Searching for {repo_id} snapshot...", flush=True)
+        src_dir = find_snapshot_dir(repo_id)
         
-        if os.path.exists(snapshots_dir):
-            snapshots = sorted(os.listdir(snapshots_dir))
-            if snapshots:
-                # Use the latest snapshot
-                src = os.path.join(snapshots_dir, snapshots[-1])
-                print(f"🔗 [OFFLINE SYNC] Linking {repo_id} -> {flat_path}", flush=True)
-                try:
-                    # In Docker volumes, symlinks can be tricky. Copy is safer.
-                    # Only copy essential tokenizer files to save time/space
-                    os.makedirs(flat_path, exist_ok=True)
-                    essential_files = ["tokenizer.json", "tokenizer_config.json", "vocab.json", "merges.txt", "special_tokens_map.json", "config.json", "spiece.model"]
-                    for f in essential_files:
-                        src_f = os.path.join(src, f)
-                        if os.path.exists(src_f):
-                            import shutil
-                            shutil.copy2(src_f, os.path.join(flat_path, f))
-                except Exception as e:
-                    print(f"⚠️ [OFFLINE SYNC] Warning: Failed to link {repo_id}: {e}", flush=True)
+        if src_dir and os.path.exists(src_dir):
+            print(f"🔗 [OFFLINE SYNC] Found snapshot at {src_dir}. Replicating to {flat_path}...", flush=True)
+            try:
+                os.makedirs(flat_path, exist_ok=True)
+                for item in os.listdir(src_dir):
+                    s = os.path.join(src_dir, item)
+                    d = os.path.join(flat_path, item)
+                    if os.path.isfile(s):
+                        shutil.copy2(s, d)
+                print(f"✨ [OFFLINE SYNC] Successfully prepared {flat_name}", flush=True)
+            except Exception as e:
+                print(f"⚠️ [OFFLINE SYNC] Error replicating {repo_id}: {e}", flush=True)
         else:
-            print(f"❌ [OFFLINE SYNC] No snapshots found for {repo_id}", flush=True)
+            print(f"❌ [OFFLINE SYNC] Could not find any snapshots for {repo_id} in {cache_root}", flush=True)
 
 def run_training(model_type, config_path):
     # Ensure tokenizers are ready for offline sd-scripts
     if model_type == "sdxl":
         ensure_offline_tokenizers()
-
+    
     print(f"Starting training with config: {config_path}", flush=True)
-    with open(config_path, "r") as f:
-        print(f"--- CONFIG CONTENT ---\n{f.read()}\n--- END CONFIG ---", flush=True)
-
+    
     is_ai_toolkit = model_type in [ImageModelType.Z_IMAGE.value, ImageModelType.QWEN_IMAGE.value]
     
     if is_ai_toolkit:
@@ -601,15 +612,7 @@ def run_training(model_type, config_path):
             config_path
         ]
     else:
-        # For FLUX, direct python3 is MORE stable in Docker than accelerate launch
-        if model_type == "flux":
-            training_command = [
-                "python3",
-                f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--disable_mmap_load_safetensors"
-            ]
-        elif model_type == "sdxl":
+        if model_type == "sdxl":
             training_command = [
                 "accelerate", "launch",
                 "--dynamo_backend", "no",
@@ -622,20 +625,22 @@ def run_training(model_type, config_path):
                 "--config_file", config_path,
                 "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
             ]
-        else:
-            # Generic fallback for other models
+        elif model_type == "flux":
             training_command = [
                 "accelerate", "launch",
+                "--dynamo_backend", "no",
+                "--dynamo_mode", "default",
                 "--mixed_precision", "bf16",
-                f"/app/sd-script/{model_type}_train_network.py",
+                "--num_processes", "1",
+                "--num_machines", "1",
+                "--num_cpu_threads_per_process", "2",
+                f"/app/sd-scripts/{model_type}_train_network.py",
                 "--config_file", config_path
             ]
     
     try:
         env = os.environ.copy()
         env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
-        env["HF_HUB_OFFLINE"] = "1"
-        env["TRANSFORMERS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
