@@ -14,44 +14,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# HARDCODED PATHS FOR OFFLINE VALIDATOR ENVIRONMENT
-TOKENIZER1_PATH = "/cache/hf_cache/hub/models--openai--clip-vit-large-patch14"
-TOKENIZER2_PATH = "/cache/hf_cache/hub/models--laion--CLIP-ViT-bigG-14-laion2B-39B-b160k"
+
+TOKENIZER1_PATH = "openai/clip-vit-large-patch14"
+TOKENIZER2_PATH = "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k"
 
 
 
 class SdxlTokenizeStrategy(TokenizeStrategy):
     def __init__(self, max_length: Optional[int], tokenizer_cache_dir: Optional[str] = None) -> None:
-        # Auto-discover actual snapshot paths for offline mode
-        def get_snapshot_path(base_path):
-            snapshots_dir = os.path.join(base_path, "snapshots")
-            if os.path.exists(snapshots_dir):
-                snapshots = os.listdir(snapshots_dir)
-                if snapshots:
-                    return os.path.join(snapshots_dir, snapshots[0])
-            return None
-        
-        # Try to find tokenizers in Hub cache structure
-        tok1_path = get_snapshot_path(TOKENIZER1_PATH)
-        tok2_path = get_snapshot_path(TOKENIZER2_PATH)
-        
-        # Use discovered paths or fall back to repo IDs
-        self.tokenizer1 = self._load_tokenizer(
-            CLIPTokenizer, 
-            tok1_path if tok1_path else "openai/clip-vit-large-patch14",
-            tokenizer_cache_dir=None if tok1_path else tokenizer_cache_dir
-        )
-        self.tokenizer2 = self._load_tokenizer(
-            CLIPTokenizer,
-            tok2_path if tok2_path else "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k",
-            tokenizer_cache_dir=None if tok2_path else tokenizer_cache_dir
-        )
+        self.tokenizer1 = self._load_tokenizer(CLIPTokenizer, TOKENIZER1_PATH, tokenizer_cache_dir=tokenizer_cache_dir)
+        self.tokenizer2 = self._load_tokenizer(CLIPTokenizer, TOKENIZER2_PATH, tokenizer_cache_dir=tokenizer_cache_dir)
         self.tokenizer2.pad_token_id = 0  # use 0 as pad token for tokenizer2
 
         if max_length is None:
             self.max_length = self.tokenizer1.model_max_length
         else:
             self.max_length = max_length + 2
+
 
     def tokenize(self, text: Union[str, List[str]]) -> List[torch.Tensor]:
         text = [text] if isinstance(text, str) else text

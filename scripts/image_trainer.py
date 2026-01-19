@@ -424,10 +424,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         with open(config_template_path, "r") as file:
             config = toml.load(file)
 
-        if 'model_arguments' in config:
-            config['model_arguments']['pretrained_model_name_or_path'] = model_path
-        else:
-            config['pretrained_model_name_or_path'] = model_path
+        config['pretrained_model_name_or_path'] = model_path
         
         # FLUX Component Auto-Pathing (G.O.D ALIGNMENT)
         if model_type == "flux":
@@ -508,16 +505,9 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
         config['output_dir'] = output_dir
 
-        # Apply Overrides to TOML
-        # For FLUX, many parameters are top-level or in different sections
-        section_map = {
-            "unet_lr": ("optimizer_arguments", "learning_rate"),
-            "text_encoder_lr": ("optimizer_arguments", "text_encoder_lr"),
-            "min_snr_gamma": ("optimizer_arguments", "min_snr_gamma"),
-            "noise_offset": ("training_arguments", "noise_offset"),
-            "optimizer_type": ("optimizer_arguments", "optimizer_type"),
-            "optimizer_args": ("optimizer_arguments", "optimizer_args"),
-        }
+        # Apply Overrides (Priority: Autoepoch < LRS)
+        # We now use FLAT injection for everything to ensure reliable overwriting
+        section_map = {}
         
         # FLUX Specific Direct Overrides (G.O.D Style - All Flat)
         if model_type == "flux":
@@ -552,62 +542,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
     return config_path
 
 
-def ensure_offline_tokenizers():
-    """Ensure CLIP tokenizers are in the exact structure sd-scripts expects for offline mode."""
-    try:
-        import shutil
-        cache_dir = train_cst.HUGGINGFACE_CACHE_PATH
-        hub_dir = os.path.join(cache_dir, "hub")
-        
-        # Target paths expected by sd-scripts
-        targets = [
-            ("openai/clip-vit-large-patch14", os.path.join(cache_dir, "openai_clip-vit-large-patch14")),
-            ("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k", os.path.join(cache_dir, "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k"))
-        ]
-
-        print("🚀 [OFFLINE SYNC] Checking CLIP tokenizers for SDXL Empire Base...", flush=True)
-        
-        for model_id, target in targets:
-            # Check if it's already a valid directory with config
-            if os.path.exists(os.path.join(target, "tokenizer_config.json")):
-                print(f"   ✅ {model_id} already exists and is valid.", flush=True)
-                continue
-            
-            # Clean up broken links/folders
-            if os.path.exists(target): 
-                if os.path.islink(target): os.unlink(target)
-                else: shutil.rmtree(target)
-
-            # Look for the source in Hub
-            repo_path = os.path.join(hub_dir, f"models--{model_id.replace('/', '--')}")
-            snapshot_base = os.path.join(repo_path, "snapshots")
-            
-            if not os.path.exists(snapshot_base):
-                print(f"   ❌ Source for {model_id} not found in Hub! Downloader might have missed it.", flush=True)
-                continue
-                
-            snapshots = os.listdir(snapshot_base)
-            if not snapshots: continue
-            
-            src = os.path.join(snapshot_base, snapshots[0])
-            print(f"   🔗 Harvesting {model_id} from Hub snapshot...", flush=True)
-            
-            # Use copytree to ensure we have actual files, not symlinks that might break
-            shutil.copytree(src, target, dirs_exist_ok=True)
-            
-            # Verification
-            if os.path.exists(os.path.join(target, "tokenizer_config.json")):
-                print(f"   ✨ Successfully reconstructed {model_id} at {target}", flush=True)
-            else:
-                print(f"   ⚠️ Reconstructed {model_id} but it looks incomplete.", flush=True)
-                
-    except Exception as e:
-        print(f"⚠️ [OFFLINE SYNC ERROR] {e}", flush=True)
-
 def run_training(model_type, config_path):
-    if model_type == "sdxl":
-        ensure_offline_tokenizers()
-
     print(f"Starting training with config: {config_path}", flush=True)
     with open(config_path, "r") as f:
         print(f"--- CONFIG CONTENT ---\n{f.read()}\n--- END CONFIG ---", flush=True)
@@ -639,8 +574,7 @@ def run_training(model_type, config_path):
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path,
-                "--tokenizer_cache_dir", os.path.join(train_cst.HUGGINGFACE_CACHE_PATH, "hub")
+                "--config_file", config_path
             ]
         else:
             # Generic fallback for other models
@@ -654,8 +588,6 @@ def run_training(model_type, config_path):
     try:
         env = os.environ.copy()
         env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
-        env["TRANSFORMERS_OFFLINE"] = "1"
-        env["HF_DATASETS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)

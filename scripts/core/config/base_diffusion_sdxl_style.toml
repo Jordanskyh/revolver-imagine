@@ -1,7 +1,4 @@
-# PROOF OF EMPIRE BASE (SDXL STYLE)
-# Reverse Config (Jordansky)
-
-
+# PROOF OF EMPIRE BASE (SDXL STYLE) - FLAT VERSION (G.O.D ALIGNMENT)
 no_metadata = true
 async_upload = true
 bucket_no_upscale = true
@@ -15,17 +12,14 @@ gradient_checkpointing = true
 huber_c = 0.1
 huber_schedule = "snr"
 
-[model_arguments]
 pretrained_model_name_or_path = "/cache/models"
 v_parameterization = false
 
-[additional_network_arguments]
 no_half_vae = true
 network_module = "networks.lora"
 network_dim = 32
 network_alpha = 32
 
-[optimizer_arguments]
 optimizer_type = "adamw8bit"
 learning_rate = 4e-5
 text_encoder_lr = 4e-6
@@ -35,11 +29,8 @@ lr_scheduler = "cosine"
 lr_warmup_steps = 25
 min_snr_gamma = 8
 
-[dataset_arguments]
-cache_latents = true
 debug_dataset = false
 
-[training_arguments]
 mixed_precision = "bf16"
 save_precision = "bf16"
 output_dir = "/app/checkpoints"
@@ -54,8 +45,6 @@ max_token_length = 125
 max_train_epochs = 20
 save_every_n_epochs = 10
 
-[inference]
-# REFERENSI MUTLAK JURI (SDXL STYLE)
 steps = 20
 guidance_scale = 8.0
 denoise = 0.9

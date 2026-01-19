@@ -1,6 +1,4 @@
-# PROOF OF EMPIRE BASE (SDXL PERSON)
-# Reverse Config (Jordansky)
-
+# PROOF OF EMPIRE BASE (SDXL PERSON) - FLAT VERSION (G.O.D ALIGNMENT)
 no_metadata = true
 async_upload = true
 bucket_no_upscale = true
@@ -14,17 +12,14 @@ gradient_checkpointing = true
 huber_c = 0.1
 huber_schedule = "snr"
 
-[model_arguments]
 pretrained_model_name_or_path = "/cache/models"
 v_parameterization = false
 
-[additional_network_arguments]
 no_half_vae = true
 network_module = "networks.lora"
 network_dim = 32
 network_alpha = 32
 
-[optimizer_arguments]
 optimizer_type = "prodigy"
 learning_rate = 1.0
 max_grad_norm = 1.0
@@ -32,11 +27,8 @@ optimizer_args = ["decouple=True", "d_coef=1", "weight_decay=0.01", "use_bias_co
 lr_scheduler = "constant"
 min_snr_gamma = 5
 
-[dataset_arguments]
-cache_latents = true
 debug_dataset = false
 
-[training_arguments]
 mixed_precision = "bf16"
 save_precision = "bf16"
 output_dir = "/app/checkpoints"
@@ -51,8 +43,6 @@ max_token_length = 75
 max_train_epochs = 25
 save_every_n_epochs = 5
 
-[inference]
-# REFERENSI MUTLAK JURI (SDXL PERSON)
 steps = 20
 guidance_scale = 8.0
 denoise = 0.9
