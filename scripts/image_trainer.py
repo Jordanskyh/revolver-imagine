@@ -362,7 +362,7 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                     for dataset in process['datasets']:
                         # AI-Toolkit expects images directly in folder_path.
                         # prepare_dataset creates a subfolder like "1_lora style"
-                        rep = cst.DIFFUSION_SDXL_REPEATS if args.model_type == ImageModelType.SDXL.value else cst.DIFFUSION_FLUX_REPEATS
+                        rep = cst.DIFFUSION_SDXL_REPEATS if model_type == ImageModelType.SDXL.value else cst.DIFFUSION_FLUX_REPEATS
                         sub_pref = f"{rep}_"
                         dataset_path = train_data_dir
                         if os.path.exists(train_data_dir):
