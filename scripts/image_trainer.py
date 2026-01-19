@@ -92,7 +92,7 @@ def load_size_based_config(model_type: str, is_style: bool, dataset_size: int) -
             print(f"Warning: Autoepoch config file not found: {config_file}", flush=True)
             return None
             
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8-sig') as f:
             size_config = json.load(f)
         
         size_ranges = size_config.get("size_ranges", [])
