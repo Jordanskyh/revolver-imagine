@@ -482,6 +482,26 @@
       "large": {
         "max_train_epochs": 20
       }
+    },
+    "c6efeaf411754e65b3e2395640d5f90ac6150a1d82e4b3caf8df566aa406609c": {
+      "model_name": "zenless-lab/sdxl-anything-xl",
+      "optimizer_args": [
+        "betas=(0.9, 0.999)",
+        "weight_decay=1e-03",
+        "eps=1e-08"
+      ],
+      "unet_lr": 0.0000411,
+      "text_encoder_lr": 0.0000411,
+      "noise_offset": 0.0411,
+      "small": {
+        "max_train_epochs": 45
+      },
+      "medium": {
+        "max_train_epochs": 30
+      },
+      "large": {
+        "max_train_epochs": 20
+      }
     }
   }
 }
