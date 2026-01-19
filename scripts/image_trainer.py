@@ -603,9 +603,38 @@ def ensure_offline_tokenizers():
         else:
             print(f"❌ [OFFLINE SYNC] Could not find any snapshots for {repo_id} in {cache_root}", flush=True)
 
+    # --- QWEN SPECIFIC FIX: Ensure 'transformer' subfolder exists ---
+    qwen_root = "/cache/models/gradients-io-tournaments--Qwen-Image"
+    transformer_dir = os.path.join(qwen_root, "transformer")
+    
+    # Check if we have the model but not the folder structure
+    if os.path.exists(qwen_root):
+        # Look for the .bin or .safetensors file in root
+        found_model = None
+        for f in os.listdir(qwen_root):
+             if f.endswith(".bin") or f.endswith(".safetensors"):
+                 found_model = f
+                 break
+        
+        if found_model and not os.path.exists(transformer_dir):
+            print(f"🔧 [OFFLINE FIX] Correcting Qwen structure. Moving {found_model} to transformer/...", flush=True)
+            try:
+                os.makedirs(transformer_dir, exist_ok=True)
+                # Copy config.json too if exists
+                if os.path.exists(os.path.join(qwen_root, "config.json")):
+                    shutil.copy2(os.path.join(qwen_root, "config.json"), os.path.join(transformer_dir, "config.json"))
+                
+                # Copy the model file
+                # Use COPY instead of MOVE to be safe if original is symlinked
+                shutil.copy2(os.path.join(qwen_root, found_model), os.path.join(transformer_dir, "diffusion_pytorch_model.bin"))
+                print("✅ [OFFLINE FIX] Qwen structure corrected.", flush=True)
+            except Exception as e:
+                 print(f"⚠️ [OFFLINE FIX] Failed to restructure Qwen: {e}", flush=True)
+
 def run_training(model_type, config_path):
     # Ensure tokenizers are ready for offline sd-scripts
-    if model_type in ["sdxl", "flux", "z-image"]:
+    # Ensure tokenizers are ready for offline sd-scripts
+    if model_type in ["sdxl", "flux", "z-image", "qwen-image"]:
         ensure_offline_tokenizers()
     
     print(f"Starting training with config: {config_path}", flush=True)
