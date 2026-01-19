@@ -534,6 +534,12 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
                 else:
                     # Direct injection for root keys (max_train_epochs, train_batch_size, etc.)
                     config[key] = value
+                    
+                    # COHERENCE: If we set max_train_epochs, clear max_train_steps to avoid conflicts
+                    if key == "max_train_epochs":
+                        if "max_train_steps" in config:
+                            print(f"   [COHERENCE] Clearing max_train_steps to prioritize epoch scaling ({value} epochs)", flush=True)
+                            del config["max_train_steps"]
 
         config_path = os.path.join(train_cst.IMAGE_CONTAINER_CONFIG_SAVE_PATH, f"{task_id}.toml")
         save_config_toml(config, config_path)
@@ -550,7 +556,8 @@ def ensure_offline_tokenizers():
     # Mapping for SDXL tokenizers
     mapping = {
         "openai/clip-vit-large-patch14": "openai_clip-vit-large-patch14",
-        "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k": "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k"
+        "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k": "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k",
+        "google/t5-v1_1-xxl": "google_t5-v1_1-xxl"
     }
     
     print(f"🔍 [OFFLINE SYNC] Scanning {cache_root} for tokenizers...", flush=True)
@@ -598,7 +605,7 @@ def ensure_offline_tokenizers():
 
 def run_training(model_type, config_path):
     # Ensure tokenizers are ready for offline sd-scripts
-    if model_type == "sdxl":
+    if model_type in ["sdxl", "flux"]:
         ensure_offline_tokenizers()
     
     print(f"Starting training with config: {config_path}", flush=True)
@@ -621,7 +628,7 @@ def run_training(model_type, config_path):
                 "--num_processes", "1",
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
-                f"/app/sd-script/{model_type}_train_network.py",
+                f"/app/sd-scripts/{model_type}_train_network.py",
                 "--config_file", config_path,
                 "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
             ]

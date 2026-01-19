@@ -1,5 +1,5 @@
 # PROOF OF EMPIRE BASE (FLUX)
-# Reverse Config (Jordansky)
+# Reverse Config (Jordansky) - Final Coherence Lock
 
 no_metadata = true
 ae = "/app/flux/ae.safetensors"
@@ -15,7 +15,7 @@ dynamo_backend = "no"
 full_bf16 = true
 gradient_accumulation_steps = 2
 gradient_checkpointing = true
-guidance_scale = 80.0
+guidance_scale = 85.0
 highvram = true
 huber_c = 0.1
 huber_scale = 1
