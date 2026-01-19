@@ -539,10 +539,55 @@ def create_config(task_id, model_path, model_name, model_type, expected_repo_nam
         save_config_toml(config, config_path)
         print(f"Created config at {config_path}", flush=True)
         return config_path
-    return config_path
-
+def ensure_offline_tokenizers():
+    """Bridge Hugging Face HUB structure to SD-Scripts FLAT structure."""
+    cache_root = train_cst.HUGGINGFACE_CACHE_PATH
+    hub_dir = os.path.join(cache_root, "hub")
+    
+    # Mapping for SDXL tokenizers
+    mapping = {
+        "openai/clip-vit-large-patch14": "openai_clip-vit-large-patch14",
+        "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k": "laion_CLIP-ViT-bigG-14-laion2B-39B-b160k"
+    }
+    
+    print(f"🔍 [OFFLINE SYNC] Checking for tokenizers in {hub_dir}...", flush=True)
+    
+    for repo_id, flat_name in mapping.items():
+        flat_path = os.path.join(cache_root, flat_name)
+        if os.path.exists(flat_path):
+            print(f"✅ [OFFLINE SYNC] {flat_name} already exists.", flush=True)
+            continue
+            
+        # Try to find snapshot in HUB structure
+        repo_slug = f"models--{repo_id.replace('/', '--')}"
+        snapshots_dir = os.path.join(hub_dir, repo_slug, "snapshots")
+        
+        if os.path.exists(snapshots_dir):
+            snapshots = sorted(os.listdir(snapshots_dir))
+            if snapshots:
+                # Use the latest snapshot
+                src = os.path.join(snapshots_dir, snapshots[-1])
+                print(f"🔗 [OFFLINE SYNC] Linking {repo_id} -> {flat_path}", flush=True)
+                try:
+                    # In Docker volumes, symlinks can be tricky. Copy is safer.
+                    # Only copy essential tokenizer files to save time/space
+                    os.makedirs(flat_path, exist_ok=True)
+                    essential_files = ["tokenizer.json", "tokenizer_config.json", "vocab.json", "merges.txt", "special_tokens_map.json", "config.json", "spiece.model"]
+                    for f in essential_files:
+                        src_f = os.path.join(src, f)
+                        if os.path.exists(src_f):
+                            import shutil
+                            shutil.copy2(src_f, os.path.join(flat_path, f))
+                except Exception as e:
+                    print(f"⚠️ [OFFLINE SYNC] Warning: Failed to link {repo_id}: {e}", flush=True)
+        else:
+            print(f"❌ [OFFLINE SYNC] No snapshots found for {repo_id}", flush=True)
 
 def run_training(model_type, config_path):
+    # Ensure tokenizers are ready for offline sd-scripts
+    if model_type == "sdxl":
+        ensure_offline_tokenizers()
+
     print(f"Starting training with config: {config_path}", flush=True)
     with open(config_path, "r") as f:
         print(f"--- CONFIG CONTENT ---\n{f.read()}\n--- END CONFIG ---", flush=True)
@@ -574,7 +619,8 @@ def run_training(model_type, config_path):
                 "--num_machines", "1",
                 "--num_cpu_threads_per_process", "2",
                 f"/app/sd-script/{model_type}_train_network.py",
-                "--config_file", config_path
+                "--config_file", config_path,
+                "--tokenizer_cache_dir", train_cst.HUGGINGFACE_CACHE_PATH
             ]
         else:
             # Generic fallback for other models
@@ -588,6 +634,8 @@ def run_training(model_type, config_path):
     try:
         env = os.environ.copy()
         env["HF_HOME"] = train_cst.HUGGINGFACE_CACHE_PATH
+        env["HF_HUB_OFFLINE"] = "1"
+        env["TRANSFORMERS_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
 
         print(f"🚀 Launching {model_type.upper()} training with command: {' '.join(training_command)}", flush=True)
